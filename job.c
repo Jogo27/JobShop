@@ -3,10 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-// To be put somewhere else
-#define FAIL 0
-#define OK   1
-#define LENGTH(x)               (sizeof x / sizeof x[0])
+#include "main.h"
+
+typedef struct {
+  unsigned short res;
+  unsigned short duration;
+} Task;
 
 struct job {
   unsigned short cur_pos;
@@ -72,8 +74,9 @@ unsigned short job_cur_duration(Job job) {
   return job->task[job->cur_pos].duration;
 }
 
-int            job_next_task(Job job) {
+int job_next_task(Job job, int start) {
   if (job == NULL) return FAIL;
+  job->start = start;
   if (job->cur_pos < job->max_pos) job->cur_pos += 1;
   return (job->cur_pos < job->max_pos ? OK : FAIL);
 }

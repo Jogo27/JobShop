@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "main.h"
 #include "job.h"
 
 int main(int argc, char ** argv) {
@@ -12,5 +13,5 @@ int main(int argc, char ** argv) {
 
   do {
     printf("at %d -> (%d,%d)\n", job_cur_position(job), job_cur_res(job), job_cur_duration(job));
-  } while (job_next_task(job));
+  } while (job_next_task(job,0) == OK);
 }
