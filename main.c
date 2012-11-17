@@ -3,15 +3,15 @@
 
 #include "main.h"
 #include "job.h"
+#include "prob.h"
 
 int main(int argc, char ** argv) {
-  Job job = job_new(0, 4);
+  Prob prob = prob_parse(stdin);
 
-  job_add_task(job,1,2);
-  job_add_task(job,2,3);
-  job_add_task(job,3,4);
-
-  do {
-    printf("at %d -> (%d,%d)\n", job_cur_position(job), job_cur_res(job), job_cur_duration(job));
-  } while (job_next_task(job,0) == OK);
+  for (int i=0; i < prob_job_count(prob); i++) {
+    Job job = prob_get_job(prob, i);
+    do {
+      printf("%d, %d -> %d, %d\n", i, job_cur_position(job), job_cur_res(job), job_cur_duration(job));
+    } while (job_next_task(job,0) == OK);
+  }
 }

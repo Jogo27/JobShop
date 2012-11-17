@@ -5,7 +5,7 @@ struct job;
 typedef struct job * Job;
 
 // Create a new job
-extern Job job_new(int start, unsigned short initial_size);
+extern Job job_create(int start, unsigned short initial_size);
 
 // Add a task to the job
 extern int job_add_task(Job job, unsigned short res, unsigned short duration);

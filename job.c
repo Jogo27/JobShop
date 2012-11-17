@@ -18,7 +18,7 @@ struct job {
   Task * task;
 };
 
-Job job_new(int start, unsigned short initial_size) {
+Job job_create(int start, unsigned short initial_size) {
   Job job = malloc(sizeof(struct job));
   if (job == NULL) return NULL;
 
