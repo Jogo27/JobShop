@@ -3,22 +3,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "main.h"
-
 typedef struct {
-  unsigned short res;
-  unsigned short duration;
-} Task;
+  ushort res;
+  ushort duration;
+} Op;
 
 struct job {
-  unsigned short cur_pos;
-  unsigned short max_pos;
+  ushort cur_pos;
+  ushort max_pos;
   size_t size;
   int start;
-  Task * task;
+  Op * op;
 };
 
-Job job_new(int start, unsigned short initial_size) {
+Job job_create(int start, ushort initial_size) {
   Job job = malloc(sizeof(struct job));
   if (job == NULL) return NULL;
 
@@ -27,8 +25,8 @@ Job job_new(int start, unsigned short initial_size) {
   job->start = start;
   job->size = initial_size;
 
-  job->task = calloc(initial_size, sizeof(Task));
-  if (job->task == NULL) {
+  job->op = calloc(initial_size, sizeof(Op));
+  if (job->op == NULL) {
     free(job);
     return NULL;
   }
@@ -36,7 +34,7 @@ Job job_new(int start, unsigned short initial_size) {
   return job;
 }
 
-int job_add_task(Job job, unsigned short res, unsigned short duration) {
+result job_add_op(Job job, ushort res, ushort duration) {
   if (job == NULL) return FAIL;
 
   size_t length = job->size;
@@ -44,46 +42,55 @@ int job_add_task(Job job, unsigned short res, unsigned short duration) {
 
   if (job->max_pos >= length) {
     job->size = length * 2;
-    Task * new_task = calloc(job->size, sizeof(Task));
-    if (new_task == NULL) return FAIL;
-    memcpy(new_task, job->task, length * sizeof(Task));
-    free(job->task);
-    job->task = new_task;
+    Op * new_op = calloc(job->size, sizeof(Op));
+    if (new_op == NULL) return FAIL;
+    memcpy(new_op, job->op, length * sizeof(Op));
+    free(job->op);
+    job->op = new_op;
   }
 
-  job->task[job->max_pos].res      = res;
-  job->task[job->max_pos].duration = duration;
+  job->op[job->max_pos].res      = res;
+  job->op[job->max_pos].duration = duration;
   job->max_pos += 1;
 
   return OK;
 }
 
-unsigned short job_cur_position(Job job) {
+ushort job_curop_position(Job job) {
+  if (job == NULL) die("NULL pointer for job_curop_position\n");
   return job->cur_pos;
 }
 
-int            job_start(Job job) {
+int job_curop_start(Job job) {
+  if (job == NULL) die("NULL pointer for job_curop_start\n");
   return job->start;
 }
 
-unsigned short job_cur_res(Job job) {
-  return job->task[job->cur_pos].res;
+ushort job_curop_res(Job job) {
+  if (job == NULL) die("NULL pointer for job_curop_res\n");
+  return job->op[job->cur_pos].res;
 }
 
-unsigned short job_cur_duration(Job job) {
-  return job->task[job->cur_pos].duration;
+ushort job_curop_duration(Job job) {
+  if (job == NULL) die("NULL pointer for job_curop_duration\n");
+  return job->op[job->cur_pos].duration;
 }
 
-int job_next_task(Job job, int start) {
+result job_next_op(Job job, int start) {
   if (job == NULL) return FAIL;
-  job->start = start;
-  if (job->cur_pos < job->max_pos) job->cur_pos += 1;
-  return (job->cur_pos < job->max_pos ? OK : FAIL);
+
+  if (job->cur_pos < job->max_pos - 1) {
+    job->cur_pos += 1;
+    job->start = start;
+    return OK;
+  }
+  else
+    return FAIL;
 }
 
-int job_free(Job job) {
+result job_free(Job job) {
   if (job == NULL) return FAIL;
-  free(job->task);
+  free(job->op);
   free(job);
   return OK;
 }

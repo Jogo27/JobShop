@@ -1,31 +1,33 @@
 #ifndef JOB_H
 #define JOB_H
 
+#include "main.h"
+
 struct job;
 typedef struct job * Job;
 
 // Create a new job
-extern Job job_new(int start, unsigned short initial_size);
+extern Job job_create(int start, ushort initial_size);
 
-// Add a task to the job
-extern int job_add_task(Job job, unsigned short res, unsigned short duration);
+// Add a operation to the job
+extern result job_add_op(Job job, ushort res, ushort duration);
 
-// The index of the next task to schedule
-extern unsigned short job_cur_position(Job job);
+// The index of the next operation to schedule
+extern ushort job_curop_position(Job job);
 
-// The minimum starting time of the next task to schedule (depends only on job's previous task duration)
+// The minimum starting time of the next operation to schedule (depends only on job's previous operation duration)
 extern int job_start(Job job);
 
-// The ressource id of the next task to schedule
-extern unsigned short job_cur_res(Job job);
+// The ressource id of the next operation to schedule
+extern ushort job_curop_res(Job job);
 
-// The duration of the next task to schedule
-extern unsigned short job_cur_duration(Job job);
+// The duration of the next operation to schedule
+extern ushort job_curop_duration(Job job);
 
-// Mark the current task as sheduled and set the minimum starting time of the next task
-extern int job_next_task(Job job, int start);
+// Mark the current operation as sheduled and set the minimum starting time of the next operation
+extern result job_next_op(Job job, int start);
 
 // Delete the job
-extern int job_free(Job job);
+extern result job_free(Job job);
 
 #endif
