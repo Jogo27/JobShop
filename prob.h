@@ -18,7 +18,7 @@ extern Job prob_get_job(Prob prob, int i);
 // Get number of jobs
 extern ushort prob_job_count(Prob prob);
 
-extern ushort prop_res_count(Prob prob);
+extern ushort prob_res_count(Prob prob);
 
 extern result prob_free(Prob prob);
 

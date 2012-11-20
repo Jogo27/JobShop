@@ -4,7 +4,7 @@
 #include "main.h"
 #include "job.h"
 #include "prob.h"
-#include "ressource.h"
+#include "plan.h"
 
 void
 die(const char *errstr, ...) {
@@ -16,6 +16,7 @@ die(const char *errstr, ...) {
 	exit(EXIT_FAILURE);
 }
 
+extern Plan sch_random(Prob prob);
 
 int main(int argc, char ** argv) {
   Prob prob = prob_parse(stdin);
@@ -26,4 +27,7 @@ int main(int argc, char ** argv) {
       printf("%d, %d -> %d, %d\n", i, job_curop_position(job), job_curop_res(job), job_curop_duration(job));
     }
   }
+
+  Plan plan = sch_random(prob);
+  plan_output(plan, stdout);
 }

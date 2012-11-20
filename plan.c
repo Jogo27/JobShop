@@ -59,11 +59,11 @@ int plan_duration(Plan plan) {
 result plan_schedule(Plan plan, Job job, ushort job_id) {
   if ((plan == NULL) || (job == NULL)) return FAIL;
 
-  ushort res_id = job_curop_position(job);
+  ushort res_id = job_curop_res(job);
   if (res_id >= plan->nb_res) return FAIL;
 
   Ressource res = plan->res[res_id];
-  if (res_add_task(res, job_id, res_id, job_curop_minstart(job), job_curop_duration(job)) == FAIL) return FAIL;
+  if (res_add_task(res, job_id, job_curop_position(job), job_curop_minstart(job), job_curop_duration(job)) == FAIL) return FAIL;
   if (job_next_op(job, res_duration(res)) == FAIL) return FAIL;
 
   return OK;
