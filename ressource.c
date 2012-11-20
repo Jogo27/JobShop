@@ -127,5 +127,14 @@ result res_next_task(Ressource res) {
 result res_rewind_task(Ressource res) {
   res_verify(res);
   res->cur_pos = 0;
-  return OK;
+  return (res->max_pos ? OK : FAIL);
+}
+
+void res_output(Ressource res, FILE* stream) {
+  res_verify(res);
+
+  for (res_rewind_task(res); res_next_task(res);) {
+    fprintf(stream, "(%d,%d,%d) ", res_curtask_job(res), res_curtask_op(res), res_curtask_start(res));
+  }
+  fprintf(stream, "\n");
 }

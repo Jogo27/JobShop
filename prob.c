@@ -2,7 +2,6 @@
 
 #include <stdlib.h>
 
-#include "main.h"
 
 struct prob {
   unsigned short nb_jobs;
@@ -17,7 +16,7 @@ Prob prob_parse(FILE* stream) {
 
 
   // read the header
-  fscanf(stream, "%hd %hd", &prob->nb_jobs, &prob->nb_res); // TODO: die if it fails
+  if (fscanf(stream, "%hd %hd", &prob->nb_jobs, &prob->nb_res) != 2) die("File format error in header\n");
 
   prob->jobs = calloc(prob->nb_jobs, sizeof(Job));
   if (prob->jobs == NULL) {
@@ -27,10 +26,11 @@ Prob prob_parse(FILE* stream) {
 
   unsigned short res, duration;
   for (int i=0; i < prob->nb_jobs; i++) {
-    prob->jobs[i] = job_create(0, prob->nb_res); // TODO: handle failure
+    prob->jobs[i] = job_create(0, prob->nb_res);
+    if (prob->jobs[i] == NULL) die("Unable to allocate job %d\n", i);
     for (int j=0; j < prob->nb_res; j++) {
-      fscanf(stream, " %hd %hd", &res, &duration); // TODO: handle failure
-      job_add_op(prob->jobs[i], res, duration); // TODO: handle failure
+      if (fscanf(stream, " %hd %hd", &res, &duration) != 2) die("File format error at line %d operation %d\n", i+1, j+1);
+      if (job_add_op(prob->jobs[i], res, duration) == FAIL) die("Unable to add operation %d to job %d\n", i, j);
     }
   }
 
@@ -50,7 +50,7 @@ int prob_job_count(Prob prob) {
 }
 
 
-int prob_free(Prob prob) {
+result prob_free(Prob prob) {
   if (prob == NULL) return FAIL;
   for (int i=0; i < prob->nb_jobs; i++)
     if (job_free(prob->jobs[i]) == FAIL) return FAIL;

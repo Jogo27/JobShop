@@ -1,6 +1,8 @@
 #ifndef RESSOURCE_H
 #define RESSOURCE_H
 
+#include <stdio.h>
+
 #include "main.h"
 
 struct ressource;
@@ -23,6 +25,8 @@ extern ushort res_curtask_jobstart(Ressource res);
 
 extern result res_next_task(Ressource res);
 extern result res_rewind_task(Ressource res);
+
+extern void res_output(Ressource res, FILE* stream);
 
 extern result res_delete(Ressource res);
 

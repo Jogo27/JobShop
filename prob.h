@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 
+#include "main.h"
 #include "job.h"
 
 struct prob;
@@ -17,6 +18,6 @@ extern Job prob_get_job(Prob prob, int i);
 // Get number of jobs
 extern int prob_job_count(Prob prob);
 
-extern int prob_free(Prob prob);
+extern result prob_free(Prob prob);
 
 #endif
