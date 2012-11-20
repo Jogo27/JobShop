@@ -22,8 +22,8 @@ int main(int argc, char ** argv) {
 
   for (int i=0; i < prob_job_count(prob); i++) {
     Job job = prob_get_job(prob, i);
-    do {
+    for (; !job_is_scheduled(job) ; job_next_op(job,0)) {
       printf("%d, %d -> %d, %d\n", i, job_curop_position(job), job_curop_res(job), job_curop_duration(job));
-    } while (job_next_op(job,0) == OK);
+    }
   }
 }

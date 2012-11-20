@@ -11,7 +11,7 @@ struct plan {
 };
 
 
-Plan   plan_create(int start, ushort nb_res, ushort nb_task) {
+Plan plan_create(int start, ushort nb_res, ushort nb_task) {
   Plan plan = malloc(sizeof(struct plan));
   if (plan == NULL) return NULL;
 
@@ -34,7 +34,7 @@ Plan   plan_create(int start, ushort nb_res, ushort nb_task) {
     }
   }
 
-  return ret;
+  return plan;
 }
 
 result plan_free(Plan plan) {
@@ -44,7 +44,7 @@ result plan_free(Plan plan) {
     if (res_free(plan->res[i]) == FAIL) return FAIL;
 
   free(plan->res);
-  free(res);
+  free(plan);
 
   return OK;
 }
@@ -62,8 +62,9 @@ result plan_schedule(Plan plan, Job job, ushort job_id) {
   ushort res_id = job_curop_position(job);
   if (res_id >= plan->nb_res) return FAIL;
 
-  if (res_add_task(plan->res[res_id], job_id, res_id, job_start(res), job_curop_duration(res)) == FAIL) return FAIL;
-  if (job_next_op(job, res_start(plan->res[res_id])) == FAIL) return FAIL;
+  Ressource res = plan->res[res_id];
+  if (res_add_task(res, job_id, res_id, job_curop_start(job), job_curop_duration(job)) == FAIL) return FAIL;
+  if (job_next_op(job, res_start(res)) == FAIL) return FAIL;
 
   return OK;
 }

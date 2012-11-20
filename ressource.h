@@ -28,6 +28,6 @@ extern result res_rewind_task(Ressource res);
 
 extern void res_output(Ressource res, FILE* stream);
 
-extern result res_delete(Ressource res);
+extern result res_free(Ressource res);
 
 #endif

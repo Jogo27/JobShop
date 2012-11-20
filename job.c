@@ -76,16 +76,28 @@ ushort job_curop_duration(Job job) {
   return job->op[job->cur_pos].duration;
 }
 
+result job_unschedule(Job job, int start) {
+  if (job == NULL) return FAIL;
+  job->cur_pos = 0;
+  job->start = start;
+  return OK;
+}
+
 result job_next_op(Job job, int start) {
   if (job == NULL) return FAIL;
 
-  if (job->cur_pos < job->max_pos - 1) {
+  if (job->cur_pos < job->max_pos) {
     job->cur_pos += 1;
     job->start = start;
     return OK;
   }
   else
     return FAIL;
+}
+
+int job_is_scheduled(Job job) {
+  if (job == NULL) die("NULL pointer for job_is_scheduled\n");
+  return (job->cur_pos >= job->max_pos);
 }
 
 result job_free(Job job) {

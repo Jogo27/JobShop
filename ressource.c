@@ -40,7 +40,7 @@ Ressource res_create(int start, ushort initial_size) {
   return res;
 }
 
-result res_delete(Ressource res) {
+result res_free(Ressource res) {
   if (res == NULL) return FAIL;
 
   free(res->tasks);

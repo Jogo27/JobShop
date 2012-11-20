@@ -10,7 +10,7 @@
 struct plan;
 typedef struct plan * Plan;
 
-extern Plan   plan_create(int start, ushort nb_res);
+extern Plan   plan_create(int start, ushort nb_res, ushort nb_tasks);
 extern result plan_free(Plan plan);
 
 extern int plan_duration(Plan plan);
