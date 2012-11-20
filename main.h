@@ -1,9 +1,11 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 #define FAIL 0
 #define OK   1
-#define LENGTH(x)               (sizeof x / sizeof x[0])
 typedef char result;
 
 typedef unsigned short ushort;

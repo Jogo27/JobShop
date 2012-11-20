@@ -14,22 +14,20 @@ typedef struct {
 } Task;
 
 struct ressource {
-  ushort cur_pos;
   ushort max_pos;
-  size_t size;
-  int    start;
+  ushort size;
+  int    duration;
   Task * tasks;
 };
 
 
-Ressource res_create(int start, ushort initial_size) {
+Ressource res_create(ushort initial_size) {
   Ressource res = malloc(sizeof(struct ressource));
   if (res == NULL) return NULL;
 
-  res->cur_pos = 0;
   res->max_pos = 0;
   res->size = initial_size;
-  res->start = start;
+  res->duration = 0;
 
   res->tasks = calloc(res->size, sizeof(Task));
   if (res->tasks == NULL) {
@@ -69,7 +67,7 @@ result res_add_task(Ressource res, ushort job, ushort op, int min_start, ushort 
     res->tasks = new_tasks;
   }
 
-  int start = (res->start > min_start ? res->start : min_start);
+  int start = MAX(res->duration, min_start);
   res->tasks[res->max_pos].job      = job;
   res->tasks[res->max_pos].op       = op;
   res->tasks[res->max_pos].start    = start;
@@ -77,64 +75,57 @@ result res_add_task(Ressource res, ushort job, ushort op, int min_start, ushort 
   res->tasks[res->max_pos].duration = duration;
 
   res->max_pos += 1;
-  res->start = start + duration;
+  res->duration = start + duration;
 
   return OK;
 }
 
-int res_start(Ressource res) {
+ushort res_max_task_id(Ressource res) {
   res_verify(res);
-  return res->start;
+  return res->max_pos;
 }
 
-ushort res_curtask_job(Ressource res) {
+int res_duration(Ressource res) {
   res_verify(res);
-  return res->tasks[res->cur_pos].job;
+  return res->duration;
 }
 
-ushort res_curtask_op(Ressource res) {
+ushort res_task_job(Ressource res, ushort task_id) {
   res_verify(res);
-  return res->tasks[res->cur_pos].op;
+  if (task_id >= res->max_pos) die("task_id out of bound\n");
+  return res->tasks[task_id].job;
 }
 
-ushort res_curtask_start(Ressource res) {
+ushort res_task_op(Ressource res, ushort task_id) {
   res_verify(res);
-  return res->tasks[res->cur_pos].start;
+  if (task_id >= res->max_pos) die("task_id out of bound\n");
+  return res->tasks[task_id].op;
 }
 
-ushort res_curtask_duration(Ressource res) {
+ushort res_task_start(Ressource res, ushort task_id) {
   res_verify(res);
-  return res->tasks[res->cur_pos].duration;
+  if (task_id >= res->max_pos) die("task_id out of bound\n");
+  return res->tasks[task_id].start;
 }
 
-ushort res_curtask_jobstart(Ressource res) {
+ushort res_task_duration(Ressource res, ushort task_id) {
   res_verify(res);
-  return res->tasks[res->cur_pos].jobstart;
+  if (task_id >= res->max_pos) die("task_id out of bound\n");
+  return res->tasks[task_id].duration;
 }
 
-
-result res_next_task(Ressource res) {
+ushort res_task_jobstart(Ressource res, ushort task_id) {
   res_verify(res);
-
-  if (res->cur_pos < res->max_pos - 1) {
-    res->cur_pos += 1;
-    return OK;
-  }
-  else
-    return FAIL;
+  if (task_id >= res->max_pos) die("task_id out of bound\n");
+  return res->tasks[task_id].jobstart;
 }
 
-result res_rewind_task(Ressource res) {
-  res_verify(res);
-  res->cur_pos = 0;
-  return (res->max_pos ? OK : FAIL);
-}
 
 void res_output(Ressource res, FILE* stream) {
   res_verify(res);
 
-  for (res_rewind_task(res); res_next_task(res);) {
-    fprintf(stream, "(%d,%d,%d) ", res_curtask_job(res), res_curtask_op(res), res_curtask_start(res));
+  for (int i=0; i < res->max_pos; i++) {
+    fprintf(stream, "(%d,%d,%d) ", res_task_job(res,i), res_task_op(res,i), res_task_start(res,i));
   }
   fprintf(stream, "\n");
 }

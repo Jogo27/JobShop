@@ -16,13 +16,13 @@ struct job {
   Op * op;
 };
 
-Job job_create(int start, ushort initial_size) {
+Job job_create(ushort initial_size) {
   Job job = malloc(sizeof(struct job));
   if (job == NULL) return NULL;
 
   job->cur_pos = 0;
   job->max_pos = 0;
-  job->start = start;
+  job->start = 0;
   job->size = initial_size;
 
   job->op = calloc(initial_size, sizeof(Op));
@@ -61,7 +61,7 @@ ushort job_curop_position(Job job) {
   return job->cur_pos;
 }
 
-int job_curop_start(Job job) {
+int job_curop_minstart(Job job) {
   if (job == NULL) die("NULL pointer for job_curop_start\n");
   return job->start;
 }
@@ -76,19 +76,20 @@ ushort job_curop_duration(Job job) {
   return job->op[job->cur_pos].duration;
 }
 
-result job_unschedule(Job job, int start) {
+result job_unschedule(Job job) {
   if (job == NULL) return FAIL;
   job->cur_pos = 0;
-  job->start = start;
+  job->start = 0;
   return OK;
 }
 
-result job_next_op(Job job, int start) {
+result job_next_op(Job job, int next_minstart) {
   if (job == NULL) return FAIL;
 
   if (job->cur_pos < job->max_pos) {
+    int job_minstart = job->start + job->op[job->cur_pos].duration;
     job->cur_pos += 1;
-    job->start = start;
+    job->start = MAX(next_minstart, job_minstart);
     return OK;
   }
   else

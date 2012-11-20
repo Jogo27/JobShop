@@ -4,8 +4,8 @@
 
 
 struct prob {
-  unsigned short nb_jobs;
-  unsigned short nb_res;
+  ushort nb_jobs;
+  ushort nb_res;
   Job * jobs;
 };
 
@@ -24,9 +24,9 @@ Prob prob_parse(FILE* stream) {
     return NULL;
   }
 
-  unsigned short res, duration;
+  ushort res, duration;
   for (int i=0; i < prob->nb_jobs; i++) {
-    prob->jobs[i] = job_create(0, prob->nb_res);
+    prob->jobs[i] = job_create(prob->nb_res);
     if (prob->jobs[i] == NULL) die("Unable to allocate job %d\n", i);
     for (int j=0; j < prob->nb_res; j++) {
       if (fscanf(stream, " %hd %hd", &res, &duration) != 2) die("File format error at line %d operation %d\n", i+1, j+1);
@@ -44,8 +44,13 @@ Job prob_get_job(Prob prob, int i) {
 }
 
 
-int prob_job_count(Prob prob) {
-  if (prob == NULL) return -1;
+ushort prob_res_count(Prob prob) {
+  if (prob == NULL) die("NULL prob pointer in prob_res_count\n");
+  return prob->nb_res;
+}
+
+ushort prob_job_count(Prob prob) {
+  if (prob == NULL) die("NULL prob pointer in prob_job_count\n");
   return prob->nb_jobs;
 }
 
