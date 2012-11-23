@@ -39,4 +39,6 @@ extern ushort job_curop_res(Job job);
 // The duration of the next operation to schedule
 extern ushort job_curop_duration(Job job);
 
+extern int job_remaining_duration(Job job);
+
 #endif

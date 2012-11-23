@@ -17,6 +17,7 @@ die(const char *errstr, ...) {
 }
 
 extern Plan sch_random(Prob prob);
+extern Plan sch_greedy(Prob prob);
 
 int main(int argc, char ** argv) {
   Prob prob = prob_parse(stdin);
@@ -28,6 +29,6 @@ int main(int argc, char ** argv) {
     }
   }
 
-  Plan plan = sch_random(prob);
+  Plan plan = sch_greedy(prob);
   plan_output(plan, stdout);
 }

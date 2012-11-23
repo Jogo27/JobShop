@@ -46,6 +46,12 @@ result plan_free(Plan plan) {
   return OK;
 }
 
+Ressource plan_get_ressource(Plan plan, ushort res_id) {
+  if (plan == NULL) die("NULL plan");
+  if (res_id >= plan->nb_res) die("res_id out of bounds\n");
+  return plan->res[res_id];
+}
+
 
 int plan_duration(Plan plan) {
   if (plan == NULL) die("NULL plan");

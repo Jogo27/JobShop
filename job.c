@@ -78,6 +78,14 @@ ushort job_curop_duration(Job job) {
   return job->op[job->cur_pos].duration;
 }
 
+int job_remaining_duration(Job job) {
+  if (job == NULL) die("NULL pointer for job_remaining_duration\n");
+
+  int duration = 0;
+  for (int i=job->cur_pos; i < job->max_pos; i++) duration += job->op[i].duration;
+  return duration;
+}
+
 result job_unschedule(Job job) {
   if (job == NULL) return FAIL;
   job->cur_pos = 0;
