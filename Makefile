@@ -15,8 +15,9 @@ job.o: job.h main.h
 prob.o: prob.h main.h job.h
 ressource.o: ressource.h main.h
 plan.o: plan.h main.h ressource.h job.h
+random.o: prob.h job.h plan.h
 
 clean:
-	rm *.o ${BINS}
+	rm *.o jobshop
 
 PHONY: all clean

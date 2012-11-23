@@ -20,6 +20,8 @@ extern ushort prob_job_count(Prob prob);
 
 extern ushort prob_res_count(Prob prob);
 
+extern result prob_unschedule(Prob prob);
+
 extern result prob_free(Prob prob);
 
 #endif
