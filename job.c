@@ -68,11 +68,13 @@ int job_curop_minstart(Job job) {
 
 ushort job_curop_res(Job job) {
   if (job == NULL) die("NULL pointer for job_curop_res\n");
+  if (job->cur_pos >= job->max_pos) die("No more op in job_curop_res\n");
   return job->op[job->cur_pos].res;
 }
 
 ushort job_curop_duration(Job job) {
   if (job == NULL) die("NULL pointer for job_curop_duration\n");
+  if (job->cur_pos >= job->max_pos) die("No more op in job_curop_duration\n");
   return job->op[job->cur_pos].duration;
 }
 
