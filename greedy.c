@@ -15,7 +15,7 @@ Plan sch_greedy(Prob prob) {
   while (1) {
 
     int min_start = INT_MAX;
-    int min_duration = INT_MAX;
+    int max_duration = 0;
     ushort job_id = 0;
 
     for (int i=0; i < nb_jobs; i++) {
@@ -24,9 +24,9 @@ Plan sch_greedy(Prob prob) {
         int time = MAX(job_curop_minstart(job), res_duration( plan_get_ressource(plan, job_curop_res(job)) ));
         if (time <= min_start) {
           int duration = job_remaining_duration(job);
-          if ((time < min_start) || (duration < min_duration)) {
+          if ((time < min_start) || (duration > max_duration)) {
             min_start = time;
-            min_duration = duration;
+            max_duration = duration;
             job_id = i;
           }
         }
