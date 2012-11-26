@@ -1,5 +1,7 @@
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "main.h"
 #include "job.h"
@@ -19,16 +21,43 @@ die(const char *errstr, ...) {
 extern Plan sch_random(Prob prob);
 extern Plan sch_greedy(Prob prob);
 
-int main(int argc, char ** argv) {
-  Prob prob = prob_parse(stdin);
+void print_help(FILE * stream, char * prog) {
+  fprintf(stream, "Usage: %s [-r|-g] <file>\n", prog);
+  exit(1);
+}
 
-  for (int i=0; i < prob_job_count(prob); i++) {
-    Job job = prob_get_job(prob, i);
-    for (; !job_is_scheduled(job) ; job_next_op(job,0)) {
-      printf("%d, %d -> %d, %d\n", i, job_curop_position(job), job_curop_res(job), job_curop_duration(job));
+int main(int argc, char ** argv) {
+
+  //Arguments
+  int arg = 1;
+  Plan (*algo)(Prob) = &sch_greedy;
+  while ((arg < argc) && (argv[arg][0] == '-')) {
+    switch (argv[arg][1]) {
+      case 'r':
+        algo = &sch_random;
+        arg += 1;
+        break;
+      case 'g':
+        algo = &sch_greedy;
+        arg += 1;
+        break;
+      case 'h':
+        print_help(stdout,argv[0]);
+        break;
+      default:
+        fprintf(stderr, "Unknown argument %s.\n", argv[arg]);
+        print_help(stderr,argv[0]);
+        break;
     }
   }
 
-  Plan plan = sch_greedy(prob);
-  plan_output(plan, stdout);
+  // Main
+  for (; arg < argc; arg++) {
+    FILE * file = fopen(argv[arg],"r");
+    if (file == NULL) die("Unable to open %s : %s\n.", argv[arg], strerror(errno));
+    Prob prob = prob_parse(file);
+    Plan plan = (*algo)(prob);
+    plan_output(plan, stdout);
+    fclose(file);
+  }
 }
