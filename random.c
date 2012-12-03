@@ -26,7 +26,7 @@ Plan sch_random(Prob prob) {
 
     ushort job_id;
     do { job_id = (ushort)( (rand() % (imax + 1 - imin)) + imin ); } while (job_is_scheduled( prob_get_job(prob, job_id) ));
-    plan_schedule(plan, prob_get_job(prob, job_id), job_id);
+    plan_schedule(plan, prob, job_id);
   }
 }
 

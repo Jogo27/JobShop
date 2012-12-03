@@ -5,6 +5,7 @@
 
 #include "main.h"
 #include "job.h"
+#include "prob.h"
 #include "ressource.h"
 
 
@@ -18,7 +19,11 @@ extern int plan_duration(Plan plan);
 
 extern Ressource plan_get_ressource(Plan plan, ushort res_id);
 
-extern result plan_schedule(Plan plan, Job job, ushort job_id);
+extern result plan_schedule(Plan plan, Prob prob, ushort job_id);
+
+// For each neighbour plan, call the function
+extern void plan_neighbourhood(Plan plan, Prob prob,
+                        void (*function)(Plan,void *), void * function_data);
 
 extern void plan_output(Plan plan, FILE * stream);
 

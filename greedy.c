@@ -35,7 +35,7 @@ Plan sch_greedy(Prob prob) {
 
     if (min_start == INT_MAX) return plan;
 
-    plan_schedule(plan, prob_get_job(prob, job_id), job_id);
+    plan_schedule(plan, prob, job_id);
   }
 }
 
