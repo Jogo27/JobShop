@@ -20,9 +20,10 @@ die(const char *errstr, ...) {
 
 extern Plan sch_random(Prob prob);
 extern Plan sch_greedy(Prob prob);
+extern Plan sch_localy(Prob prob);
 
 void print_help(FILE * stream, char * prog) {
-  fprintf(stream, "Usage: %s [-r|-g] <file>\n", prog);
+  fprintf(stream, "Usage: %s [-r|-g|-l] <file>\n", prog);
   exit(1);
 }
 
@@ -39,6 +40,10 @@ int main(int argc, char ** argv) {
         break;
       case 'g':
         algo = &sch_greedy;
+        arg += 1;
+        break;
+      case 'l':
+        algo = &sch_localy;
         arg += 1;
         break;
       case 'h':
