@@ -9,7 +9,7 @@
 Plan sch_greedy(Prob prob) {
   ushort nb_jobs = prob_job_count(prob);
 
-  Plan plan = plan_create( prob_res_count(prob), nb_jobs );
+  Plan plan = plan_create(prob);
   prob_unschedule(prob);
 
   while (1) {

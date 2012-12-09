@@ -154,6 +154,20 @@ ushort res_task_jobstart(Ressource res, ushort task_id) {
   return res->tasks[task_id].jobstart;
 }
 
+int res_swap(Ressource res, ushort task_a_id, ushort task_b_id) {
+  if ((res == NULL) || (res->nb_refs != 1) ||
+      (task_a_id >= res->max_pos) || (task_b_id >= res->max_pos) ) return FAIL;
+
+  Task * buffer = malloc(sizeof(Task));
+  if (buffer == NULL) return FAIL;
+
+  memcpy(buffer,                 &res->tasks[task_a_id], sizeof(Task));
+  memcpy(&res->tasks[task_a_id], &res->tasks[task_b_id], sizeof(Task));
+  memcpy(&res->tasks[task_b_id], buffer,                 sizeof(Task));
+  
+  free(buffer);
+  return OK;
+}
 
 void res_output(Ressource res, FILE* stream) {
   res_verify(res);

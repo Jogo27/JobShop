@@ -10,11 +10,11 @@ struct plan {
 };
 
 
-Plan plan_create(ushort nb_res, ushort nb_task) {
+Plan plan_create(Prob prob) {
   Plan plan = malloc(sizeof(struct plan));
   if (plan == NULL) return NULL;
 
-  plan->nb_res = nb_res;
+  plan->nb_res = prob_res_count(prob);
   plan->res = calloc(plan->nb_res, sizeof(Ressource));
   if (plan->res == NULL) {
     free(plan);
@@ -22,7 +22,7 @@ Plan plan_create(ushort nb_res, ushort nb_task) {
   }
 
   for (int i=0; i < plan->nb_res; i++) {
-    plan->res[i] = res_create(nb_task);
+    plan->res[i] = res_create(prob_job_count(prob));
     if (plan->res[i] == NULL) {
       for (; i >= 0; i--) res_free(plan->res[i]);
       free(plan->res);
@@ -85,58 +85,66 @@ void plan_output(Plan plan, FILE * stream) {
   }
 }
 
+Plan
+plan_replay(Plan plan, Prob prob) {
+  if ((plan == NULL) || (prob == NULL)) die("NULL argument to plan_replay\n");
+
+  Plan ret = plan_create(prob);
+  ushort res_id = 0;
+  prob_unschedule(prob);
+  while (!prob_is_scheduled(prob)) {
+    ushort task_id  = res_max_task_id(ret->res[res_id]);
+    ushort task_max = res_max_task_id(plan->res[res_id]);
+
+    while (task_id < task_max) {
+      ushort job_id = res_task_job(plan->res[res_id], task_id);
+      if (res_task_op(plan->res[res_id], task_id) == job_curop_position(prob_get_job(prob, job_id))) {
+        plan_schedule(ret, prob, job_id);
+        task_id += 1;
+      }
+      else {
+        task_id = task_max;
+      }
+    }
+
+    res_id = (res_id + 1) % plan->nb_res;
+  }
+
+  return ret;
+}
+
 void
 plan_neighbourhood(Plan plan, Prob prob, void (*function)(Plan,void *), void * function_data) {
   if ((plan == NULL) || (prob == NULL) || (function == NULL)) die("NULL argument to plan_neighbourhood\n");
 
-  ushort res_pos[plan->nb_res];
-  int size = 0;
-  for (int i=0; i < plan->nb_res; i++) {
-    res_pos[i] = 0;
-    size += res_max_task_id(plan->res[i]);
+  for (int res_id = 0; res_id < plan->nb_res; res_id++) {
+    for (int task_id = 0; task_id + 1 < res_max_task_id(plan->res[res_id]); task_id++) {
+      Ressource res = plan->res[res_id];
+
+      if (res_task_jobstart(res, task_id + 1) < res_task_start(res, task_id) + res_task_duration(res, task_id)) {
+
+        Plan nplan = malloc(sizeof(struct plan));
+        if (nplan == NULL) die("Unable to allocate neighbour plan\n");
+
+        nplan->nb_res = plan->nb_res;
+        nplan->res = calloc(nplan->nb_res, sizeof(Ressource));
+        if (nplan->res == NULL) die("Unable to allocate ressources for neighbour plan\n");
+
+        for (int i=0; i < nplan->nb_res; i++) {
+          if (i == res_id) {
+            nplan->res[i] = res_copy(plan->res[i]);
+            res_swap(nplan->res[i], task_id, task_id + 1);
+          }
+          else {
+            nplan->res[i] = res_clone(plan->res[i]);
+          }
+        }
+
+        (*function)(plan_replay(nplan,prob), function_data);
+        plan_free(nplan);
+      }
+
+    }
   }
 
-  // We keep track of the sequence of job id until the last permutation
-  ushort job_seq[size];
-
-  int job_pos = 0;
-  ushort res_id = 0;
-  Plan nplan = plan_create(plan->nb_res, size / plan->nb_res);
-  prob_unschedule(prob);
-
-  while (job_pos < size) {
-    while (res_pos[res_id] >= res_max_task_id(plan->res[res_id])) res_id = (res_id + 1) % plan->nb_res;
-    Ressource cur_res = plan->res[res_id];
-    ushort cur_pos = res_pos[res_id];
-
-    if ( (res_pos[res_id] + 1 < res_max_task_id(cur_res)) &&
-         (res_task_jobstart(cur_res, cur_pos + 1) < res_task_start(cur_res, cur_pos) + res_task_duration(cur_res, cur_pos)) ) {
-      // Permutation is possible
-      ushort cur_job = res_task_job(cur_res, cur_pos + 1);
-
-      if (res_task_op(cur_res, cur_pos + 1) == job_curop_position(prob_get_job(prob, cur_job))) {
-        // permutation
-        plan_schedule(nplan, prob, cur_job);
-        // TODO terminate nplan
-        // TODO call function
-        // TODO restart nplan and add cur_pos to job_seq
-      }
-      else {
-        res_id = (res_id + 1) % plan->nb_res;
-      }
-    }
-    else {
-      // permutation is impossible
-      ushort cur_job = res_task_job(cur_res, cur_pos);
-
-      if (res_task_op(cur_res, cur_pos) == job_curop_position(prob_get_job(prob, cur_job))) {
-        plan_schedule(nplan, prob, cur_job);
-        job_seq[job_pos++] = cur_job;
-        res_pos[res_id] += 1;
-      }
-      else {
-        res_id = (res_id + 1) % plan->nb_res;
-      }
-    }
-  } // while
 }

@@ -33,6 +33,8 @@ extern ushort res_task_start   (Ressource res, ushort task_id);
 extern ushort res_task_duration(Ressource res, ushort task_id);
 extern ushort res_task_jobstart(Ressource res, ushort task_id);
 
+// Swap tasks a and b
+extern int res_swap(Ressource res, ushort task_a_id, ushort task_b_id);
 
 extern void res_output(Ressource res, FILE* stream);
 

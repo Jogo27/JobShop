@@ -54,6 +54,15 @@ ushort prob_job_count(Prob prob) {
   return prob->nb_jobs;
 }
 
+ushort prob_is_scheduled(Prob prob) {
+  if (prob == NULL) die("NULL prob pointer in prob_is_scheduled\n");
+
+  for (int i=0; i < prob->nb_jobs; i++) {
+    if (job_is_scheduled(prob->jobs[i])) return 1;
+  }
+  return 0;
+}
+
 result prob_unschedule(Prob prob) {
   if (prob == NULL) die("NULL prob pointer in prob_unschedule\n");
   for (int i=0; i < prob->nb_jobs; i++)
