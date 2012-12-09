@@ -11,6 +11,12 @@ typedef struct ressource * Ressource;
 // Create a empty ressource
 extern Ressource res_create(ushort initial_size);
 
+// Hard copy
+extern Ressource res_copy(Ressource res);
+
+// Soft copy
+extern Ressource res_clone(Ressource res);
+
 extern result res_free(Ressource res);
 
 // Add a task

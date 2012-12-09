@@ -14,6 +14,7 @@ typedef struct {
 } Task;
 
 struct ressource {
+  ushort nb_refs;
   ushort max_pos;
   ushort size;
   int    duration;
@@ -25,6 +26,7 @@ Ressource res_create(ushort initial_size) {
   Ressource res = malloc(sizeof(struct ressource));
   if (res == NULL) return NULL;
 
+  res->nb_refs = 1;
   res->max_pos = 0;
   res->size = initial_size;
   res->duration = 0;
@@ -38,11 +40,42 @@ Ressource res_create(ushort initial_size) {
   return res;
 }
 
-result res_free(Ressource res) {
-  if (res == NULL) return FAIL;
+Ressource res_copy(Ressource from) {
+  if ((from == NULL) || (from->nb_refs == 0)) return NULL;
 
-  free(res->tasks);
-  free(res);
+  Ressource res = malloc(sizeof(struct ressource));
+  if (res == NULL) return NULL;
+
+  res->nb_refs  = 1;
+  res->max_pos  = from->max_pos;
+  res->size     = from->max_pos;
+  res->duration = from->duration;
+
+  res->tasks = calloc(res->size, sizeof(Task));
+  if (res->tasks == NULL) {
+    free(res);
+    return NULL;
+  }
+  memcpy(res->tasks, from->tasks, res->size * sizeof(Task));
+
+  return res;
+}
+
+Ressource res_clone(Ressource res) {
+  if ((res == NULL) || (res->nb_refs == 0)) return NULL;
+
+  res->nb_refs += 1;
+  return res;
+}
+
+result res_free(Ressource res) {
+  if ((res == NULL) || (res->nb_refs == 0)) return FAIL;
+
+  res->nb_refs -= 1;
+  if (res->nb_refs == 0) {
+    free(res->tasks);
+    free(res);
+  }
   
   return OK;
 }
@@ -50,6 +83,7 @@ result res_free(Ressource res) {
 // Die if res is invalid
 void res_verify(Ressource res) {
   if (res == NULL) die("NULL ressource pointer");
+  if (res->nb_refs < 1) die("Invalid ressource");
 }
 
 result res_add_task(Ressource res, ushort job, ushort op, int min_start, ushort duration) {
