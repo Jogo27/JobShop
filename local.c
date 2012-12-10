@@ -12,6 +12,9 @@ void aux(Plan plan, void * data) {
     plan_free(*((Plan *)data));
     *((Plan *)data) = (void*)plan;
   }
+  else {
+    plan_free(plan);
+  }
 }
 
 Plan sch_localy(Prob prob) {
