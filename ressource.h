@@ -19,6 +19,8 @@ extern Ressource res_clone(Ressource res);
 
 extern result res_free(Ressource res);
 
+extern int res_equals(Ressource res_a, Ressource res_b);
+
 // Add a task
 extern result res_add_task(Ressource res, ushort job, ushort op, int min_start, ushort duration);
 

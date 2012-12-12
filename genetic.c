@@ -1,19 +1,21 @@
 #include "main.h"
 #include "plan.h"
 #include "prob.h"
+#include "population.h"
 
-#define NB_INIT_RANDOM
+#define NB_INIT_RANDOM 9
 
 extern Plan sch_random(Prob prob);
 extern Plan sch_greedy(Prob prob);
 
-void aux(Plan plan, void * data) {
+void genetic_aux(Plan plan, void * data) {
   pop_insert((Population)data, plan);
 }
 
 void grew(Plan mature, Population olds, Population youngs, Prob prob) {
-  plan_neighbourhood(mature, prob, &aux, (void *)youngs);
-  ushort max = pop_size(olds) - 1;
+  plan_neighbourhood(mature, prob, &genetic_aux, (void *)youngs);
+  ushort max = pop_size(olds);
+  if (max > 0) max -= 1;
   for (int i=0; i < max; i++) pop_insert(youngs, plan_merge(mature, pop_get(olds,i)));
 }
 
@@ -23,7 +25,7 @@ Plan sch_genetic(Prob prob)  {
   Population matures = pop_create();
   Population olds    = pop_create();
 
-  pop_apppend(youngs, sch_greedy(prob));
+  pop_append(youngs, sch_greedy(prob));
   for (int i=0; i < NB_INIT_RANDOM; i++) {
     Plan p = sch_random(prob);
     pop_insert(youngs, p);
@@ -33,6 +35,7 @@ Plan sch_genetic(Prob prob)  {
   ushort size_m;
   Plan   mature;
   while (pop_size(youngs) > 0) {
+    printf("%d %d\n", pop_size(olds), pop_size(youngs));
 
     // Youngs become mature
     Population buffer = matures;
@@ -51,12 +54,16 @@ Plan sch_genetic(Prob prob)  {
       if (duration_o < duration_m) {
         id_o += 1;
       }
-      else if ((duration_o == duration_m) && plan_equals(pop_get(olds, id_o), mature)) {
-        plan_free(mature);
-        id_m += 1;
+      else if (duration_o == duration_m) {
+        if (plan_equals(pop_get(olds, id_o), mature)) {
+          plan_free(mature);
+          id_m += 1;
+        }
+        else
+          id_o += 1;
       }
       else {
-        grew(mature, olds, youngs);
+        grew(mature, olds, youngs, prob);
         pop_insert_at(olds, mature, id_o);
         id_m += 1;
         id_o += 1;
@@ -64,7 +71,7 @@ Plan sch_genetic(Prob prob)  {
     }
     while ((id_m < size_m) && (id_o < POP_SIZE)) {
       mature = pop_get(matures, id_m);
-      grew(mature, olds, youngs);
+      grew(mature, olds, youngs, prob);
       pop_append(olds, mature);
       id_m += 1;
       id_o += 1;

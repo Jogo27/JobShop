@@ -52,6 +52,14 @@ Ressource plan_get_ressource(Plan plan, ushort res_id) {
   return plan->res[res_id];
 }
 
+int plan_equals(Plan plan_a, Plan plan_b) {
+  if ((plan_a == NULL) && (plan_b == NULL)) return 1;
+  if ((plan_a == NULL) || (plan_b == NULL) || (plan_a->nb_res != plan_b->nb_res)) return 0;
+
+  for (int i=0; i < plan_a->nb_res; i++)
+    if (!res_equals(plan_a->res[i], plan_b->res[i])) return 0;
+  return 1;
+}
 
 int plan_duration(Plan plan) {
   if (plan == NULL) die("NULL plan");
@@ -147,4 +155,9 @@ plan_neighbourhood(Plan plan, Prob prob, void (*function)(Plan,void *), void * f
     }
   }
 
+}
+
+Plan plan_merge(Plan plan_a, Plan plan_b) {
+  // TODO
+  return NULL;
 }

@@ -4,7 +4,7 @@
 
 extern Plan sch_random(Prob prob);
 
-void aux(Plan plan, void * data) {
+void local_aux(Plan plan, void * data) {
   if (*((Plan *)data) == NULL) {
     *((Plan *)data) = plan;
   }
@@ -25,7 +25,7 @@ Plan sch_localy(Prob prob) {
   while (1) {
     count += 1;
     data = NULL;
-    plan_neighbourhood(plan, prob, &aux, &data);
+    plan_neighbourhood(plan, prob, &local_aux, &data);
     if ((data == NULL) || (plan_duration(plan) <= plan_duration(data))) {
       if (data != NULL) plan_free(data);
       printf("%d iterations\n", count);

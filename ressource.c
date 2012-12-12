@@ -80,6 +80,20 @@ result res_free(Ressource res) {
   return OK;
 }
 
+int res_equals(Ressource res_a, Ressource res_b) {
+  if (res_a == res_b) return 1;
+  if ( (res_a == NULL) || (res_b == NULL)   ||
+       (res_a->duration != res_b->duration) ||
+       (res_a->max_pos  != res_b->max_pos)
+     ) return 0;
+
+  for (int i=0; i < res_a->max_pos; i++)
+    if ( (res_a->tasks[i].job != res_b->tasks[i].job) ||
+         (res_a->tasks[i].op  != res_b->tasks[i].op)
+       ) return 0;
+  return 1;
+}
+
 // Die if res is invalid
 void res_verify(Ressource res) {
   if (res == NULL) die("NULL ressource pointer");
