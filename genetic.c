@@ -8,13 +8,28 @@
 extern Plan sch_random(Prob prob);
 extern Plan sch_greedy(Prob prob);
 
-void genetic_aux(Plan plan, void * data) {
-  pop_insert((Population)data, plan);
+struct genetic_aux {
+  int        max_duration;
+  Population youngs;
+};
+
+void genetic_aux(Plan plan, void * vdata) {
+  struct genetic_aux * data = (struct genetic_aux *)vdata;
+  if ( (data->max_duration < 0) ||
+       (plan_duration(plan) <= data->max_duration)
+     ) pop_insert(data->youngs, plan);
+  else
+    plan_free(plan);
 }
 
 void grew(Plan mature, Population olds, Population youngs, Prob prob) {
-  plan_neighbourhood(mature, prob, &genetic_aux, (void *)youngs);
   ushort max = pop_size(olds);
+
+  struct genetic_aux data;
+  data.max_duration = (max == 0 ? -1 : plan_duration(pop_get(olds,max-1)));
+  data.youngs = youngs;
+  plan_neighbourhood(mature, prob, &genetic_aux, (void *)&data);
+
   if (max > 0) max -= 1;
   for (int i=0; i < max; i++) pop_insert(youngs, plan_merge(mature, pop_get(olds,i)));
 }
