@@ -7,9 +7,8 @@
 
 typedef struct {
   ushort job;
-  ushort op;
-  int    start;
   ushort duration;
+  int    start;
   int    jobstart;
 } Task;
 
@@ -88,9 +87,7 @@ int res_equals(Ressource res_a, Ressource res_b) {
      ) return 0;
 
   for (int i=0; i < res_a->max_pos; i++)
-    if ( (res_a->tasks[i].job != res_b->tasks[i].job) ||
-         (res_a->tasks[i].op  != res_b->tasks[i].op)
-       ) return 0;
+    if (res_a->tasks[i].job != res_b->tasks[i].job) return 0;
   return 1;
 }
 
@@ -100,8 +97,9 @@ void res_verify(Ressource res) {
   if (res->nb_refs < 1) die("Invalid ressource");
 }
 
-result res_add_task(Ressource res, ushort job, ushort op, int min_start, ushort duration) {
+result res_add_task(Ressource res, Job job, ushort job_id) {
   res_verify(res);
+  if (job == NULL) die("NULL job in res_add_task\n");
 
   size_t length = res->size;
   if (length < 1) length = 1;
@@ -115,12 +113,13 @@ result res_add_task(Ressource res, ushort job, ushort op, int min_start, ushort 
     res->tasks = new_tasks;
   }
 
+  int min_start = job_curop_minstart(job);
+  int duration  = job_curop_duration(job);
   int start = MAX(res->duration, min_start);
-  res->tasks[res->max_pos].job      = job;
-  res->tasks[res->max_pos].op       = op;
+  res->tasks[res->max_pos].job      = job_id;
   res->tasks[res->max_pos].start    = start;
   res->tasks[res->max_pos].jobstart = min_start;
-  res->tasks[res->max_pos].duration = duration;
+  res->tasks[res->max_pos].jobstart = duration;
 
   res->max_pos += 1;
   res->duration = start + duration;
@@ -142,12 +141,6 @@ ushort res_task_job(Ressource res, ushort task_id) {
   res_verify(res);
   if (task_id >= res->max_pos) die("task_id out of bound\n");
   return res->tasks[task_id].job;
-}
-
-ushort res_task_op(Ressource res, ushort task_id) {
-  res_verify(res);
-  if (task_id >= res->max_pos) die("task_id out of bound\n");
-  return res->tasks[task_id].op;
 }
 
 ushort res_task_start(Ressource res, ushort task_id) {
@@ -187,7 +180,7 @@ void res_output(Ressource res, FILE* stream) {
   res_verify(res);
 
   for (int i=0; i < res->max_pos; i++) {
-    fprintf(stream, "(%d,%d,%d,%d) ", res_task_job(res,i), res_task_op(res,i), res_task_start(res,i), res_task_duration(res,i));
+    fprintf(stream, "(%d,%d,%d) ", res_task_job(res,i), res_task_start(res,i), res_task_duration(res,i));
   }
   fprintf(stream, "\n");
 }

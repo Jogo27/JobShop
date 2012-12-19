@@ -13,7 +13,7 @@ jobshop: ${OBJS}
 main.o: main.h job.h prob.h plan.h
 job.o: job.h main.h
 prob.o: prob.h main.h job.h
-ressource.o: ressource.h main.h
+ressource.o: ressource.h main.h job.h
 plan.o: plan.h main.h ressource.h job.h prob.h
 random.o: prob.h job.h plan.h
 greedy.o: prob.h job.h plan.h main.h ressource.h

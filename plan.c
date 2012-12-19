@@ -78,7 +78,7 @@ result plan_schedule(Plan plan, Prob prob, ushort job_id) {
   if (res_id >= plan->nb_res) return FAIL;
 
   Ressource res = plan->res[res_id];
-  if (res_add_task(res, job_id, job_curop_position(job), job_curop_minstart(job), job_curop_duration(job)) == FAIL) return FAIL;
+  if (res_add_task(res, job, job_id) == FAIL) return FAIL;
   if (job_next_op(job, res_duration(res)) == FAIL) return FAIL;
 
   return OK;
@@ -106,7 +106,7 @@ plan_replay(Plan plan, Prob prob) {
 
     while (task_id < task_max) {
       ushort job_id = res_task_job(plan->res[res_id], task_id);
-      if (res_task_op(plan->res[res_id], task_id) == job_curop_position(prob_get_job(prob, job_id))) {
+      if (job_curop_res(prob_get_job(prob, job_id)) == res_id) {
         plan_schedule(ret, prob, job_id);
         task_id += 1;
       }
