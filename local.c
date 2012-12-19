@@ -5,7 +5,7 @@
 extern Plan sch_random(Prob prob);
 
 void local_aux(Plan plan, void * data) {
-  plan_output(plan, stdout);
+//  plan_output(plan, stdout);
   if (*((Plan *)data) == NULL) {
     *((Plan *)data) = plan;
   }

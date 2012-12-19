@@ -119,7 +119,7 @@ result res_add_task(Ressource res, Job job, ushort job_id) {
   res->tasks[res->max_pos].job      = job_id;
   res->tasks[res->max_pos].start    = start;
   res->tasks[res->max_pos].jobstart = min_start;
-  res->tasks[res->max_pos].jobstart = duration;
+  res->tasks[res->max_pos].duration = duration;
 
   res->max_pos += 1;
   res->duration = start + duration;
