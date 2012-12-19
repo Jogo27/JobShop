@@ -30,7 +30,7 @@ extern result plan_schedule(Plan plan, Prob prob, ushort job_id);
 extern void plan_neighbourhood(Plan plan, Prob prob,
                         void (*function)(Plan,void *), void * function_data);
 
-extern Plan plan_merge(Plan plan_a, Plan plan_b);
+extern Plan plan_merge(Plan plan_a, Plan plan_b, Prob prob);
 
 
 extern void plan_output(Plan plan, FILE * stream);

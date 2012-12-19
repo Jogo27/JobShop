@@ -120,8 +120,8 @@ plan_replay(Plan plan, Prob prob) {
     // Prevent infinite loop
     guard += 1;
     if (guard > plan->nb_res) {
-      plan_output(plan, stdout);
-      plan_output(ret, stdout);
+//      plan_output(plan, stdout);
+//      plan_output(ret, stdout);
       plan_free(ret);
       return NULL;
     }
@@ -168,7 +168,29 @@ plan_neighbourhood(Plan plan, Prob prob, void (*function)(Plan,void *), void * f
 
 }
 
-Plan plan_merge(Plan plan_a, Plan plan_b) {
-  // TODO
-  return NULL;
+Plan plan_merge(Plan plan_a, Plan plan_b, Prob prob) {
+  /* Gene are ressources. If the ressource is the last to be released in its parent, the other one is choosen.
+   * Othewise, it's random. */
+  if ((plan_a == NULL) || (plan_b == NULL)) die("NULL plan for plan_merge\n");
+  if ((plan_a->nb_res != plan_b->nb_res) || (plan_a->nb_res != prob_res_count(prob))) die("Plans' size doesn't match in plan_merge\n");
+
+  Plan draft = plan_create(prob);
+  if (draft == NULL) return NULL;
+
+  int makespan_a = plan_duration(plan_a);
+  int makespan_b = plan_duration(plan_b);
+  for (int i=0; i < plan_a->nb_res; i++) {
+    if (res_duration(plan_a->res[i]) == makespan_a) {
+      if ((makespan_a < makespan_b) && (res_duration(plan_b->res[i]) == makespan_b))
+        draft->res[i] = res_clone(plan_a->res[i]);
+      else
+        draft->res[i] = res_clone(plan_b->res[i]);
+    }
+    else
+      draft->res[i] = res_clone((rand() & 1 ? plan_a : plan_b)->res[i]);
+  }
+
+  Plan ret = plan_replay(draft, prob);
+  plan_free(draft);
+  return ret;
 }

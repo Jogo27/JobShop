@@ -31,7 +31,7 @@ void grew(Plan mature, Population olds, Population youngs, Prob prob) {
   plan_neighbourhood(mature, prob, &genetic_aux, (void *)&data);
 
   if (max > 0) max -= 1;
-  for (int i=0; i < max; i++) pop_insert(youngs, plan_merge(mature, pop_get(olds,i)));
+  for (int i=0; i < max; i++) pop_insert(youngs, plan_merge(mature, pop_get(olds,i), prob));
 }
 
 Plan sch_genetic(Prob prob)  {
