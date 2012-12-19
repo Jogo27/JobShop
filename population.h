@@ -1,7 +1,7 @@
 #ifndef POPULATION_H
 #define POPULATION_H
 
-#define POP_SIZE 1024
+#define POP_SIZE 128
 
 #include "main.h"
 #include "plan.h"

@@ -37,6 +37,15 @@ Prob prob_parse(FILE* stream) {
   return prob;
 }
 
+result prob_free(Prob prob) {
+  if (prob == NULL) return FAIL;
+  for (int i=0; i < prob->nb_jobs; i++)
+    if (job_free(prob->jobs[i]) == FAIL) return FAIL;
+  free(prob->jobs);
+  free(prob);
+  return OK;
+}
+
 
 Job prob_get_job(Prob prob, int i) {
   if ((prob == NULL) || (i < 0) || (i >= prob->nb_jobs)) return NULL;
@@ -69,10 +78,3 @@ result prob_unschedule(Prob prob) {
   return OK;
 }
 
-
-result prob_free(Prob prob) {
-  if (prob == NULL) return FAIL;
-  for (int i=0; i < prob->nb_jobs; i++)
-    if (job_free(prob->jobs[i]) == FAIL) return FAIL;
-  return OK;
-}

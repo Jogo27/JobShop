@@ -68,7 +68,7 @@ Ressource res_clone(Ressource res) {
 }
 
 result res_free(Ressource res) {
-  if ((res == NULL) || (res->nb_refs == 0)) return FAIL;
+  if ((res == NULL) || (res->nb_refs == 0)) die("oups");
 
   res->nb_refs -= 1;
   if (res->nb_refs == 0) {

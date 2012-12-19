@@ -66,8 +66,12 @@ int main(int argc, char ** argv) {
     FILE * file = fopen(argv[arg],"r");
     if (file == NULL) die("Unable to open %s : %s\n.", argv[arg], strerror(errno));
     Prob prob = prob_parse(file);
+    fclose(file);
+
     Plan plan = (*algo)(prob);
     plan_output(plan, stdout);
-    fclose(file);
+
+    plan_free(plan);
+    prob_free(prob);
   }
 }

@@ -10,7 +10,7 @@ struct plan {
 };
 
 
-Plan plan_create(Prob prob) {
+Plan plan_create_empty(Prob prob) {
   Plan plan = malloc(sizeof(struct plan));
   if (plan == NULL) return NULL;
 
@@ -20,6 +20,13 @@ Plan plan_create(Prob prob) {
     free(plan);
     return NULL;
   }
+
+  return plan;
+}
+
+Plan plan_create(Prob prob) {
+  Plan plan = plan_create_empty(prob);
+  if (plan == NULL) return NULL;
 
   for (int i=0; i < plan->nb_res; i++) {
     plan->res[i] = res_create(prob_job_count(prob));
@@ -174,7 +181,7 @@ Plan plan_merge(Plan plan_a, Plan plan_b, Prob prob) {
   if ((plan_a == NULL) || (plan_b == NULL)) die("NULL plan for plan_merge\n");
   if ((plan_a->nb_res != plan_b->nb_res) || (plan_a->nb_res != prob_res_count(prob))) die("Plans' size doesn't match in plan_merge\n");
 
-  Plan draft = plan_create(prob);
+  Plan draft = plan_create_empty(prob);
   if (draft == NULL) return NULL;
 
   int makespan_a = plan_duration(plan_a);
@@ -187,7 +194,7 @@ Plan plan_merge(Plan plan_a, Plan plan_b, Prob prob) {
         draft->res[i] = res_clone(plan_b->res[i]);
     }
     else
-      draft->res[i] = res_clone((rand() & 1 ? plan_a : plan_b)->res[i]);
+      draft->res[i] = res_clone(((rand() & 1) ? plan_a : plan_b)->res[i]);
   }
 
   Plan ret = plan_replay(draft, prob);

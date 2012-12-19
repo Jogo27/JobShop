@@ -3,7 +3,7 @@
 #include "prob.h"
 #include "population.h"
 
-#define NB_INIT_RANDOM 9
+#define NB_INIT_RANDOM 123
 
 extern Plan sch_random(Prob prob);
 extern Plan sch_greedy(Prob prob);
@@ -11,27 +11,35 @@ extern Plan sch_greedy(Prob prob);
 struct genetic_aux {
   int        max_duration;
   Population youngs;
+
+  // Stats
+  unsigned int stat_generations;
+  unsigned int stat_mutations;
+  unsigned int stat_crossovers;
 };
 
 void genetic_aux(Plan plan, void * vdata) {
   struct genetic_aux * data = (struct genetic_aux *)vdata;
   if ( (data->max_duration < 0) ||
        (plan_duration(plan) <= data->max_duration)
-     ) pop_insert(data->youngs, plan);
+     ) {
+    if (pop_insert(data->youngs, plan) == OK)
+      data->stat_mutations += 1;
+  }
   else
     plan_free(plan);
 }
 
-void grew(Plan mature, Population olds, Population youngs, Prob prob) {
+void grew(Plan mature, Population olds, Prob prob, struct genetic_aux * data) {
   ushort max = pop_size(olds);
 
-  struct genetic_aux data;
-  data.max_duration = (max == 0 ? -1 : plan_duration(pop_get(olds,max-1)));
-  data.youngs = youngs;
-  plan_neighbourhood(mature, prob, &genetic_aux, (void *)&data);
+  data->max_duration = (max == 0 ? -1 : plan_duration(pop_get(olds,max-1)));
+  plan_neighbourhood(mature, prob, &genetic_aux, (void *)data);
 
   if (max > 0) max -= 1;
-  for (int i=0; i < max; i++) pop_insert(youngs, plan_merge(mature, pop_get(olds,i), prob));
+  for (int i=0; i < max; i++)
+    if (pop_insert(data->youngs, plan_merge(mature, pop_get(olds,i), prob)) == OK)
+      data->stat_crossovers += 1;
 }
 
 Plan sch_genetic(Prob prob)  {
@@ -39,6 +47,11 @@ Plan sch_genetic(Prob prob)  {
   Population youngs  = pop_create();
   Population matures = pop_create();
   Population olds    = pop_create();
+
+  struct genetic_aux data;
+  data.stat_generations = 0;
+  data.stat_mutations   = 0;
+  data.stat_crossovers  = 0;
 
   pop_append(youngs, sch_greedy(prob));
   for (int i=0; i < NB_INIT_RANDOM; i++) {
@@ -56,6 +69,9 @@ Plan sch_genetic(Prob prob)  {
     Population buffer = matures;
     matures = youngs;
     youngs  = buffer;
+
+    data.youngs = youngs;
+    data.stat_generations += 1;
 
     // Matures merge, derive and become old
     id_o = 0;
@@ -78,7 +94,7 @@ Plan sch_genetic(Prob prob)  {
           id_o += 1;
       }
       else {
-        grew(mature, olds, youngs, prob);
+        grew(mature, olds, prob, &data);
         pop_insert_at(olds, mature, id_o);
         id_m += 1;
         id_o += 1;
@@ -86,7 +102,7 @@ Plan sch_genetic(Prob prob)  {
     }
     while ((id_m < size_m) && (id_o < POP_SIZE)) {
       mature = pop_get(matures, id_m);
-      grew(mature, olds, youngs, prob);
+      grew(mature, olds, prob, &data);
       pop_append(olds, mature);
       id_m += 1;
       id_o += 1;
@@ -103,5 +119,7 @@ Plan sch_genetic(Prob prob)  {
   pop_free(olds);
   pop_free(matures);
   pop_free(youngs);
+  printf("%d generations, %d mutations, %d crossovers\n",
+      data.stat_generations, data.stat_mutations, data.stat_crossovers);
   return ret;
 }

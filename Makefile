@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -std=c99
+CFLAGS = -g -std=c99 -fno-builtin
 LDFLAGS = 
 
 SRCS = main.c job.c ressource.c prob.c plan.c random.c greedy.c local.c population.c genetic.c
