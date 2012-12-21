@@ -65,6 +65,7 @@ int main(int argc, char ** argv) {
   for (; arg < argc; arg++) {
     FILE * file = fopen(argv[arg],"r");
     if (file == NULL) die("Unable to open %s : %s\n.", argv[arg], strerror(errno));
+    printf("Processing %s\n", argv[arg]);
     Prob prob = prob_parse(file);
     fclose(file);
 

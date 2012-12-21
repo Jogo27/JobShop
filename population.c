@@ -129,6 +129,14 @@ result pop_insert(Population pop, Plan plan) {
 }
 
 
+ushort pop_copy_append(Population dest, Population src, ushort pos) {
+  if ((dest == NULL) || (src == NULL)) die("NULL population for pop_copy_append\n");
+
+  ushort nb_copy = MIN( (POP_SIZE - dest->size), (src->size - pos) );
+  memcpy(&dest->plans[dest->size], &src->plans[pos], nb_copy * sizeof(Plan));
+  dest->size += nb_copy;
+  return nb_copy;
+}
 
 // Forget about the pop's plans (without deleting them)
 void pop_reset(Population pop) {

@@ -1,7 +1,7 @@
 #ifndef POPULATION_H
 #define POPULATION_H
 
-#define POP_SIZE 128
+#define POP_SIZE 1024
 
 #include "main.h"
 #include "plan.h"
@@ -30,6 +30,9 @@ extern result pop_insert_at(Population pop, Plan plan, ushort pos);
 // Delete plans getting out the pop
 extern result pop_insert(Population pop, Plan plan);
 
+// Append to dest as much plans as possible from src starting at pos.
+// Returns the number of plans added.
+extern ushort pop_copy_append(Population dest, Population src, ushort pos);
 
 // Forget about the pop's plans (without deleting them)
 extern void pop_reset(Population pop);

@@ -1,8 +1,8 @@
 CC = gcc
-CFLAGS = -g -std=c99 -fno-builtin
+CFLAGS = -g -std=c99
 LDFLAGS = 
 
-SRCS = main.c job.c ressource.c prob.c plan.c random.c greedy.c local.c population.c genetic.c
+SRCS = main.c job.c ressource.c prob.c plan.c random.c greedy.c local.c population.c ngenetic.c
 OBJS = $(SRCS:.c=.o)
 
 all: jobshop
@@ -19,7 +19,7 @@ random.o: prob.h job.h plan.h
 greedy.o: prob.h job.h plan.h main.h ressource.h
 local.o: plan.h prob.h main.h
 population.o: population.h main.h plan.h
-genetic.o: main.h plan.h prob.h population.h
+ngenetic.o: main.h plan.h prob.h population.h
 
 clean:
 	rm *.o jobshop
