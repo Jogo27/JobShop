@@ -140,39 +140,55 @@ plan_replay(Plan plan, Prob prob) {
 }
 
 void
+plan_neighbourhood_one(Plan plan, ushort res_id, Prob prob, void (*function)(Plan,void *), void * function_data) {
+  if ((plan == NULL) || (prob == NULL) || (function == NULL)) die("NULL argument to plan_neighbourhood_one\n");
+  if (res_id > plan->nb_res) die("res_id out of bound for plan_neighbourhood_one\n"); 
+  Ressource res = plan->res[res_id];
+
+  for (int task_id = 0; task_id + 1 < res_max_task_id(plan->res[res_id]); task_id++) {
+    if (res_task_jobstart(res, task_id + 1) < res_task_start(res, task_id) + res_task_duration(res, task_id)) {
+
+      Plan nplan = malloc(sizeof(struct plan));
+      if (nplan == NULL) die("Unable to allocate neighbour plan\n");
+
+      nplan->nb_res = plan->nb_res;
+      nplan->res = calloc(nplan->nb_res, sizeof(Ressource));
+      if (nplan->res == NULL) die("Unable to allocate ressources for neighbour plan\n");
+
+      for (int i=0; i < nplan->nb_res; i++) {
+        if (i == res_id) {
+          nplan->res[i] = res_copy(plan->res[i]);
+          res_swap(nplan->res[i], task_id, task_id + 1);
+        }
+        else {
+          nplan->res[i] = res_clone(plan->res[i]);
+        }
+      }
+
+      (*function)(plan_replay(nplan,prob), function_data);
+      plan_free(nplan);
+    }
+  }
+}
+
+void
+plan_neighbourhood_worse(Plan plan, Prob prob, void (*function)(Plan,void *), void * function_data) {
+  if ((plan == NULL) || (prob == NULL) || (function == NULL)) die("NULL argument to plan_neighbourhood\n");
+
+  int duration = plan_duration(plan);
+  for (int res_id = 0; res_id < plan->nb_res; res_id++)
+    if (duration == res_duration(plan->res[res_id]))
+      plan_neighbourhood_one(plan, res_id, prob, function, function_data);
+}
+
+
+
+void
 plan_neighbourhood(Plan plan, Prob prob, void (*function)(Plan,void *), void * function_data) {
   if ((plan == NULL) || (prob == NULL) || (function == NULL)) die("NULL argument to plan_neighbourhood\n");
 
-  for (int res_id = 0; res_id < plan->nb_res; res_id++) {
-    for (int task_id = 0; task_id + 1 < res_max_task_id(plan->res[res_id]); task_id++) {
-      Ressource res = plan->res[res_id];
-
-      if (res_task_jobstart(res, task_id + 1) < res_task_start(res, task_id) + res_task_duration(res, task_id)) {
-
-        Plan nplan = malloc(sizeof(struct plan));
-        if (nplan == NULL) die("Unable to allocate neighbour plan\n");
-
-        nplan->nb_res = plan->nb_res;
-        nplan->res = calloc(nplan->nb_res, sizeof(Ressource));
-        if (nplan->res == NULL) die("Unable to allocate ressources for neighbour plan\n");
-
-        for (int i=0; i < nplan->nb_res; i++) {
-          if (i == res_id) {
-            nplan->res[i] = res_copy(plan->res[i]);
-            res_swap(nplan->res[i], task_id, task_id + 1);
-          }
-          else {
-            nplan->res[i] = res_clone(plan->res[i]);
-          }
-        }
-
-        (*function)(plan_replay(nplan,prob), function_data);
-        plan_free(nplan);
-      }
-
-    }
-  }
-
+  for (int res_id = 0; res_id < plan->nb_res; res_id++)
+    plan_neighbourhood_one(plan, res_id, prob, function, function_data);
 }
 
 Plan plan_merge(Plan plan_a, Plan plan_b, Prob prob) {

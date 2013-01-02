@@ -82,7 +82,7 @@ Plan sch_genetic(Prob prob)  {
       else
         id_m += pop_copy_append(buffer, matures, id_m);
     }
-    printf("%4d %4d %4d\n", id_m, id_y, plan_duration(pop_get(buffer,0)));
+    printf("%4d %4d %4d ", id_m, id_y, plan_duration(pop_get(buffer,0)));
 
     for (; id_m < pop_size(matures); id_m++) plan_free(pop_get(matures, id_m));
     pop_reset(matures);
@@ -97,13 +97,27 @@ Plan sch_genetic(Prob prob)  {
     
     data.youngs = youngs;
     max_m = pop_size(matures);
-    int proba_mutation = ((((RAND_MAX / prob_job_count(prob)) * 2) / prob_res_count(prob)) / max_m) * POP_SIZE;
+    int proba_mutation = ((RAND_MAX / prob_job_count(prob)) / max_m) * POP_SIZE;
     int proba_crossover = (((RAND_MAX / max_m) * 3) / (max_m - 1)) * POP_SIZE;
-    printf("%d %d ", proba_mutation, proba_crossover);
+    printf("%d %d\n", proba_mutation, proba_crossover);
 
     for (id_m = 0; id_m < max_m; id_m++) {
       Plan plan_m = pop_get(matures, id_m);
-      if (rand() <= proba_mutation) plan_neighbourhood(plan_m, prob, &genetic_aux, (void *)&data);
+
+      // Mutations
+      int dice = rand();
+      if (dice <= proba_mutation) {
+        if (dice < proba_mutation / 2) {
+          if (dice < proba_mutation / 8)
+            plan_neighbourhood(plan_m, prob, &genetic_aux, (void *)&data);
+          else
+            plan_neighbourhood_worse(plan_m, prob, &genetic_aux, (void *)&data);
+        }
+        else
+          plan_neighbourhood_one(plan_m, (ushort)(rand() % prob_res_count(prob)), prob, &genetic_aux, (void *)&data);
+      }
+
+      // Crossover
       for (int i = id_m + 1; i < max_m; i++)
         if ( (rand() <= proba_crossover) && (pop_insert(youngs, plan_merge(plan_m, pop_get(matures,i), prob)) == OK) )
           data.stat_crossovers += 1;
