@@ -126,7 +126,7 @@ plan_replay(Plan plan, Prob prob) {
 
     // Prevent infinite loop
     guard += 1;
-    if (guard > plan->nb_res) {
+    if (guard >= plan->nb_res) {
 //      plan_output(plan, stdout);
 //      plan_output(ret, stdout);
       plan_free(ret);

@@ -1,5 +1,6 @@
 *.swp
 *~
 *.o
+gmon.out
 a.out
 jobshop

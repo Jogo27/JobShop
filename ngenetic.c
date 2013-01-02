@@ -5,8 +5,8 @@
 #include "prob.h"
 #include "population.h"
 
-#define NB_INIT_RANDOM 123
-#define NB_GENERATIONS 300
+#define NB_INIT_RANDOM 511
+#define NB_GENERATIONS 600
 
 extern Plan sch_random(Prob prob);
 extern Plan sch_greedy(Prob prob);
@@ -45,7 +45,7 @@ Plan sch_genetic(Prob prob)  {
   }
 
   for (; (pop_size(youngs) > 0) && (data.stat_generations < NB_GENERATIONS); data.stat_generations++) {
-    printf("%d %d\n", pop_size(matures), pop_size(youngs));
+    printf("%03d %4d %4d ", data.stat_generations, pop_size(matures), pop_size(youngs));
     
     // Merge youngs and matures into matures
 
@@ -82,6 +82,7 @@ Plan sch_genetic(Prob prob)  {
       else
         id_m += pop_copy_append(buffer, matures, id_m);
     }
+    printf("%4d %4d %4d\n", id_m, id_y, plan_duration(pop_get(buffer,0)));
 
     for (; id_m < pop_size(matures); id_m++) plan_free(pop_get(matures, id_m));
     pop_reset(matures);
@@ -96,10 +97,9 @@ Plan sch_genetic(Prob prob)  {
     
     data.youngs = youngs;
     max_m = pop_size(matures);
-    int proba_mutation = (((RAND_MAX / prob_job_count(prob)) * 4) / prob_res_count(prob)) * POP_SIZE;
-    if (proba_mutation < (RAND_MAX / 100)) proba_mutation = RAND_MAX / 100;
-    int proba_crossover = (((RAND_MAX / max_m) * 2) / (max_m - 1)) * POP_SIZE; 
-    if (proba_crossover < (RAND_MAX / 100)) proba_crossover = RAND_MAX / 100;
+    int proba_mutation = ((((RAND_MAX / prob_job_count(prob)) * 2) / prob_res_count(prob)) / max_m) * POP_SIZE;
+    int proba_crossover = (((RAND_MAX / max_m) * 3) / (max_m - 1)) * POP_SIZE;
+    printf("%d %d ", proba_mutation, proba_crossover);
 
     for (id_m = 0; id_m < max_m; id_m++) {
       Plan plan_m = pop_get(matures, id_m);
