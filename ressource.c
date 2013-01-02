@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "main.h"
-#include "square_matrice.h"
 
 typedef struct {
   ushort job;
@@ -182,6 +181,9 @@ int res_swap(Ressource res, ushort task_a_id, ushort task_b_id) {
   free(buffer);
   return OK;
 }
+
+// For efficiency, sqmat_get and sqmat_set need to be static.
+#include "square_matrice.c"
 
 SqMat res_incident_matrice(Ressource res) {
   res_verify(res);

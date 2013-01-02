@@ -97,8 +97,8 @@ Plan sch_genetic(Prob prob)  {
     
     data.youngs = youngs;
     max_m = pop_size(matures);
-    int proba_mutation = ((RAND_MAX / prob_job_count(prob)) / max_m) * POP_SIZE;
-    int proba_crossover = (((RAND_MAX / max_m) * 2) / (max_m - 1)) * POP_SIZE;
+    int proba_mutation = ((((RAND_MAX / prob_job_count(prob)) / max_m) / 5) * 3) * POP_SIZE;
+    int proba_crossover = (((RAND_MAX / max_m) * 3) / (max_m - 1)) * POP_SIZE;
     printf("%d %d\n", proba_mutation, proba_crossover);
 
     for (id_m = 0; id_m < max_m; id_m++) {

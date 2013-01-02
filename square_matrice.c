@@ -1,11 +1,26 @@
-#include "square_matrice.h"
-
+#include <limits.h>
 #include <stdlib.h>
+
+#include "main.h"
+
+#define SM_NULL SCHAR_MIN
 
 struct sq_mat {
   ushort size;
   schar * tab;
 };
+typedef struct sq_mat * SqMat;
+
+static SqMat sqmat_create(ushort size);
+
+static result sqmat_free(SqMat sm);
+
+static inline schar sqmat_get(SqMat sm, ushort x, ushort y);
+
+static inline void sqmat_set(SqMat sm, ushort x, ushort y, schar v);
+
+static SqMat sqmat_add(SqMat a, SqMat b);
+
 
 SqMat sqmat_create(ushort size) {
   if (size == 0) return NULL;
