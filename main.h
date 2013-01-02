@@ -9,6 +9,7 @@
 typedef char result;
 
 typedef unsigned short ushort;
+typedef signed   char  schar;
 
 #include <stdarg.h>
 extern void die(const char *errstr, ...);

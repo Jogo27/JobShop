@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "main.h"
+#include "square_matrice.h"
 
 typedef struct {
   ushort job;
@@ -97,9 +98,8 @@ void res_verify(Ressource res) {
   if (res->nb_refs < 1) die("Invalid ressource");
 }
 
-result res_add_task(Ressource res, Job job, ushort job_id) {
+result res_add_task_low(Ressource res, ushort job_id, int min_start, int duration) {
   res_verify(res);
-  if (job == NULL) die("NULL job in res_add_task\n");
 
   size_t length = res->size;
   if (length < 1) length = 1;
@@ -113,8 +113,6 @@ result res_add_task(Ressource res, Job job, ushort job_id) {
     res->tasks = new_tasks;
   }
 
-  int min_start = job_curop_minstart(job);
-  int duration  = job_curop_duration(job);
   int start = MAX(res->duration, min_start);
   res->tasks[res->max_pos].job      = job_id;
   res->tasks[res->max_pos].start    = start;
@@ -125,6 +123,15 @@ result res_add_task(Ressource res, Job job, ushort job_id) {
   res->duration = start + duration;
 
   return OK;
+}
+
+result res_add_task(Ressource res, Job job, ushort job_id) {
+  res_verify(res);
+  if (job == NULL) die("NULL job in res_add_task\n");
+
+  int min_start = job_curop_minstart(job);
+  int duration  = job_curop_duration(job);
+  return res_add_task_low(res, job_id, min_start, duration);
 }
 
 ushort res_max_task_id(Ressource res) {
@@ -174,6 +181,73 @@ int res_swap(Ressource res, ushort task_a_id, ushort task_b_id) {
   
   free(buffer);
   return OK;
+}
+
+SqMat res_incident_matrice(Ressource res) {
+  res_verify(res);
+  ushort size = res->max_pos;
+
+  SqMat im = sqmat_create(size);
+  if (im == NULL) die("Unable to create incident matrice\n");
+
+  for (int i=0; i < size; i++)
+    sqmat_set(im, i, i, 0);
+
+  for (int task_id=0; task_id < (size - 1); task_id++) {
+    ushort job_id = res->tasks[task_id].job;
+    for (int i=0; i < size; i++)
+      if (i != job_id) {
+        if (sqmat_get(im, job_id, i) == SM_NULL)
+          sqmat_set(im, job_id, i, -1);
+        if (sqmat_get(im, i, job_id) == SM_NULL)
+          sqmat_set(im, i, job_id,  1);
+      }
+  }
+
+  return im;
+}
+
+Ressource res_crossover(Ressource res_a, Ressource res_b) {
+  res_verify(res_a);
+  res_verify(res_b);
+  if (res_a->max_pos != res_b->max_pos) die("Not matching ressources for res_crossover\n");
+
+  SqMat im_a = res_incident_matrice(res_a);
+  SqMat im_b = res_incident_matrice(res_b);
+  SqMat im_r = sqmat_add(im_a, im_b);
+  sqmat_free(im_a);
+  sqmat_free(im_b);
+  if (im_r == NULL) die("Unable to create the sum of incident matrices\n");
+
+  ushort size = res_a->max_pos;
+  Ressource res = res_create(size);
+  if (res == NULL) {
+    sqmat_free(im_r);
+    die("Unbale to create resulting ressource in res_crossover\n");
+  }
+
+  ushort id = rand() % size;
+  while (res->max_pos < size) {
+    ushort y = 0;
+
+    schar v;
+    do {
+      v = sqmat_get(im_r, id, y);
+    } while (((v == -2) || (v == 0)) && (++y < size));
+
+    if (y == size) {
+      res_add_task_low(res, id, 0, 1);
+      sqmat_set(im_r, id, 0, SM_NULL);
+      for (int i=0; i < size; i++)
+        if (sqmat_get(im_r, i, id) == 2) sqmat_set(im_r, i, id, 0);
+      id = rand() % size;
+    }
+    else
+      id = (id + 1) % size;
+  }
+
+  sqmat_free(im_r);
+  return res;
 }
 
 void res_output(Ressource res, FILE* stream) {

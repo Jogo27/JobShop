@@ -5,8 +5,8 @@
 #include "prob.h"
 #include "population.h"
 
-#define NB_INIT_RANDOM 511
-#define NB_GENERATIONS 600
+#define NB_INIT_RANDOM 1023
+#define NB_GENERATIONS 300
 
 extern Plan sch_random(Prob prob);
 extern Plan sch_greedy(Prob prob);
@@ -98,7 +98,7 @@ Plan sch_genetic(Prob prob)  {
     data.youngs = youngs;
     max_m = pop_size(matures);
     int proba_mutation = ((RAND_MAX / prob_job_count(prob)) / max_m) * POP_SIZE;
-    int proba_crossover = (((RAND_MAX / max_m) * 3) / (max_m - 1)) * POP_SIZE;
+    int proba_crossover = (((RAND_MAX / max_m) * 2) / (max_m - 1)) * POP_SIZE;
     printf("%d %d\n", proba_mutation, proba_crossover);
 
     for (id_m = 0; id_m < max_m; id_m++) {
@@ -118,9 +118,18 @@ Plan sch_genetic(Prob prob)  {
       }
 
       // Crossover
-      for (int i = id_m + 1; i < max_m; i++)
-        if ( (rand() <= proba_crossover) && (pop_insert(youngs, plan_merge(plan_m, pop_get(matures,i), prob)) == OK) )
-          data.stat_crossovers += 1;
+      for (int i = id_m + 1; i < max_m; i++) {
+        dice = rand();
+        if (dice <= proba_crossover) {
+          if (dice < proba_crossover / 2) {
+            if (pop_insert(youngs, plan_merge_task(plan_m, pop_get(matures,i), prob)) == OK)
+              data.stat_crossovers += 1;
+          }
+          else
+            if (pop_insert(youngs, plan_merge_res(plan_m, pop_get(matures,i), prob)) == OK)
+              data.stat_crossovers += 1;
+        }
+      }
     }
   }
 

@@ -25,6 +25,9 @@ extern int res_equals(Ressource res_a, Ressource res_b);
 // Add a task
 extern result res_add_task(Ressource res, Job job, ushort job_id);
 
+// Low level version of res_add_task
+extern result res_add_task_low(Ressource res, ushort job_id, int min_start, int duration);
+
 // Next free moment
 extern int    res_duration(Ressource res);
 
@@ -37,6 +40,10 @@ extern ushort res_task_jobstart(Ressource res, ushort task_id);
 
 // Swap tasks a and b
 extern int res_swap(Ressource res, ushort task_a_id, ushort task_b_id);
+
+// Create a random crossover which keeps the common partial ordering of tasks.
+// The resulting ressource contains arbitrary jobstarts and durations (it has to be replayed).
+extern Ressource res_crossover(Ressource res_a, Ressource res_b);
 
 extern void res_output(Ressource res, FILE* stream);
 

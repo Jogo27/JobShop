@@ -181,8 +181,6 @@ plan_neighbourhood_worse(Plan plan, Prob prob, void (*function)(Plan,void *), vo
       plan_neighbourhood_one(plan, res_id, prob, function, function_data);
 }
 
-
-
 void
 plan_neighbourhood(Plan plan, Prob prob, void (*function)(Plan,void *), void * function_data) {
   if ((plan == NULL) || (prob == NULL) || (function == NULL)) die("NULL argument to plan_neighbourhood\n");
@@ -191,8 +189,8 @@ plan_neighbourhood(Plan plan, Prob prob, void (*function)(Plan,void *), void * f
     plan_neighbourhood_one(plan, res_id, prob, function, function_data);
 }
 
-Plan plan_merge(Plan plan_a, Plan plan_b, Prob prob) {
-  /* Gene are ressources. If the ressource is the last to be released in its parent, the other one is choosen.
+Plan plan_merge_res(Plan plan_a, Plan plan_b, Prob prob) {
+  /* Genes are ressources. If the ressource is the last to be released in its parent, the other one is choosen.
    * Othewise, it's random. */
   if ((plan_a == NULL) || (plan_b == NULL)) die("NULL plan for plan_merge\n");
   if ((plan_a->nb_res != plan_b->nb_res) || (plan_a->nb_res != prob_res_count(prob))) die("Plans' size doesn't match in plan_merge\n");
@@ -211,6 +209,27 @@ Plan plan_merge(Plan plan_a, Plan plan_b, Prob prob) {
     }
     else
       draft->res[i] = res_clone(((rand() & 1) ? plan_a : plan_b)->res[i]);
+  }
+
+  Plan ret = plan_replay(draft, prob);
+  plan_free(draft);
+  return ret;
+}
+
+Plan plan_merge_task(Plan plan_a, Plan plan_b, Prob prob) {
+  if ((plan_a == NULL) || (plan_b == NULL)) die("NULL plan for plan_merge\n");
+  if ((plan_a->nb_res != plan_b->nb_res) || (plan_a->nb_res != prob_res_count(prob))) die("Plans' size doesn't match in plan_merge\n");
+
+  Plan draft = plan_create_empty(prob);
+  if (draft == NULL) return NULL;
+
+  int makespan_a = plan_duration(plan_a);
+  int makespan_b = plan_duration(plan_b);
+  for (int i=0; i < plan_a->nb_res; i++) {
+    if (res_equals(plan_a->res[i], plan_b->res[i]))
+      draft->res[i] = res_clone(plan_a->res[i]);
+    else
+      draft->res[i] = res_crossover(plan_a->res[i], plan_b->res[i]);
   }
 
   Plan ret = plan_replay(draft, prob);
