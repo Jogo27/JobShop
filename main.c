@@ -31,12 +31,12 @@ void debug(const char *format, ...) {
 }
 
 void info(const char *format, ...) {
-  if (!debug_mode) {
+//  if (!debug_mode) {
     va_list ap;
     va_start(ap, format);
     vprintf(format, ap);
     va_end(ap);
-  }
+//  }
 }
 
 extern Plan sch_random(Prob prob);
@@ -97,10 +97,9 @@ int main(int argc, char ** argv) {
     clock_t c = clock();
     Plan plan = (*algo)(prob);
     c = clock() - c;
-    if (!debug_mode)
-      printf(" makespan %4d duration %.1f s\n",
-          plan_duration(plan),
-          (double)c / (double)CLOCKS_PER_SEC);
+    printf(" makespan %4d duration %.1f s\n",
+        plan_duration(plan),
+        (double)c / (double)CLOCKS_PER_SEC);
     if (output_plan) plan_output(plan, stdout);
 
     plan_free(plan);

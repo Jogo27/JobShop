@@ -25,11 +25,11 @@ struct genetic_data {
 
 void genetic_aux(Plan plan, void * vdata) {
   struct genetic_data * data = (struct genetic_data *)vdata;
-  data->mutations_left -= 1;
+  data->stat_mutations += 1;
   if (pop_insert(data->youngs, plan) == OK) {
     if (plan_duration(plan) < data->best_duration)
       debug("mutation of %d\n", data->current);
-    data->stat_mutations += 1;
+    data->mutations_left -= 1;
   }
 }
 
@@ -112,7 +112,7 @@ Plan sch_genetic(Prob prob)  {
 
     data.youngs = youngs;
 //    data.mutations_left = POP_SIZE;
-    int crossovers_left = POP_SIZE + (POP_SIZE / 4) - data.mutations_left;
+    int crossovers_left = POP_SIZE - data.mutations_left;
     debug("%4d %4d\n", data.mutations_left, crossovers_left);
 
     long div;
@@ -158,14 +158,14 @@ Plan sch_genetic(Prob prob)  {
         for (int i = id_m + 1; i < max_m; i++) {
           int dice = rand();
           if (dice <= proba) {
-            crossovers_left -= 1;
+            data.stat_crossovers += 1;
             Plan plan_y;
             if (dice < proba / 2) {
               plan_y = plan_merge_task(plan_m, pop_get(matures,i), prob);
               if (pop_insert(youngs, plan_y) == OK) {
                 if (plan_duration(plan_y) < data.best_duration)
                   debug("crossover task of %d and %d\n", id_m, i);
-                data.stat_crossovers += 1;
+                crossovers_left -= 1;
               }
             }
             else {
@@ -173,7 +173,7 @@ Plan sch_genetic(Prob prob)  {
               if (pop_insert(youngs, plan_y) == OK) {
                 if (plan_duration(plan_y) < data.best_duration)
                   debug("crossover res of %d and %d\n", id_m, i);
-                data.stat_crossovers += 1;
+                crossovers_left -= 1;
               }
             }
           }
