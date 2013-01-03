@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -std=c99 -g -pg
-LDFLAGS = -pg
+CFLAGS = -std=c99 -O3
+LDFLAGS = -O3
 
 SRCS = main.c job.c ressource.c prob.c plan.c random.c greedy.c local.c population.c ngenetic.c
 OBJS = $(SRCS:.c=.o)
