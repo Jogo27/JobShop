@@ -256,7 +256,7 @@ void res_output(Ressource res, FILE* stream) {
   res_verify(res);
 
   for (int i=0; i < res->max_pos; i++) {
-    fprintf(stream, "(%d,%d,%d) ", res_task_job(res,i), res_task_start(res,i), res_task_duration(res,i));
+    fprintf(stream, "%d ", res_task_job(res,i));
   }
   fprintf(stream, "\n");
 }

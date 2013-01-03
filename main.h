@@ -14,4 +14,10 @@ typedef signed   char  schar;
 #include <stdarg.h>
 extern void die(const char *errstr, ...);
 
+// Only print in "debug" mode
+extern void debug(const char *format, ...);
+
+// Print summary information (not in "debug" mode)
+extern void info(const char *format, ...);
+
 #endif

@@ -94,7 +94,6 @@ result plan_schedule(Plan plan, Prob prob, ushort job_id) {
 
 void plan_output(Plan plan, FILE * stream) {
   if (plan == NULL) die("NULL plan");
-  fprintf(stream, "%d %d\n", plan->nb_res, plan_duration(plan));
   for (int i=0; i < plan->nb_res; i++) {
     res_output(plan->res[i], stream);
   }

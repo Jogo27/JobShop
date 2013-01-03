@@ -28,7 +28,7 @@ void genetic_aux(Plan plan, void * vdata) {
   data->mutations_left -= 1;
   if (pop_insert(data->youngs, plan) == OK) {
     if (plan_duration(plan) < data->best_duration)
-      printf("mutation of %d\n", data->current);
+      debug("mutation of %d\n", data->current);
     data->stat_mutations += 1;
   }
 }
@@ -55,7 +55,7 @@ Plan sch_genetic(Prob prob)  {
   }
 
   for (; (pop_size(youngs) > 0) && (data.stat_generations < NB_GENERATIONS); data.stat_generations++) {
-    printf("%03d %4d %4d ", data.stat_generations, pop_size(matures), pop_size(youngs));
+    debug("%03d %4d %4d ", data.stat_generations, pop_size(matures), pop_size(youngs));
     
     // Merge youngs and matures into matures
 
@@ -92,7 +92,7 @@ Plan sch_genetic(Prob prob)  {
       else
         id_m += pop_copy_append(buffer, matures, id_m);
     }
-    printf("%4d %4d - %4d - ", id_m, id_y, plan_duration(pop_get(buffer,0)));
+    debug("%4d %4d - %4d - ", id_m, id_y, plan_duration(pop_get(buffer,0)));
     data.mutations_left = (1 * POP_SIZE) + ((1 * id_m * id_m) / POP_SIZE) - (2 * id_m);
 
     for (; id_m < pop_size(matures); id_m++) plan_free(pop_get(matures, id_m));
@@ -113,7 +113,7 @@ Plan sch_genetic(Prob prob)  {
     data.youngs = youngs;
 //    data.mutations_left = POP_SIZE;
     int crossovers_left = POP_SIZE + (POP_SIZE / 4) - data.mutations_left;
-    printf("%4d %4d\n", data.mutations_left, crossovers_left);
+    debug("%4d %4d\n", data.mutations_left, crossovers_left);
 
     long div;
     int proba;
@@ -164,7 +164,7 @@ Plan sch_genetic(Prob prob)  {
               plan_y = plan_merge_task(plan_m, pop_get(matures,i), prob);
               if (pop_insert(youngs, plan_y) == OK) {
                 if (plan_duration(plan_y) < data.best_duration)
-                  printf("crossover task of %d and %d\n", id_m, i);
+                  debug("crossover task of %d and %d\n", id_m, i);
                 data.stat_crossovers += 1;
               }
             }
@@ -172,7 +172,7 @@ Plan sch_genetic(Prob prob)  {
               plan_y = plan_merge_res(plan_m, pop_get(matures,i), prob);
               if (pop_insert(youngs, plan_y) == OK) {
                 if (plan_duration(plan_y) < data.best_duration)
-                  printf("crossover res of %d and %d\n", id_m, i);
+                  debug("crossover res of %d and %d\n", id_m, i);
                 data.stat_crossovers += 1;
               }
             }
@@ -191,7 +191,7 @@ Plan sch_genetic(Prob prob)  {
   for (int id_m = 1; id_m < max_m; id_m++) plan_free(pop_get(matures, id_m));
   pop_free(matures);
   pop_free(youngs);
-  printf("%d generations, %d mutations, %d crossovers\n",
-      data.stat_generations, data.stat_mutations, data.stat_crossovers);
+  info("%7d mutations %7d crossovers",
+      data.stat_mutations, data.stat_crossovers);
   return ret;
 }
