@@ -5,8 +5,7 @@
 #include "prob.h"
 #include "population.h"
 
-#define NB_INIT_RANDOM 1023
-#define NB_GENERATIONS 300
+#define NB_GENERATIONS 1000
 
 extern Plan sch_random(Prob prob);
 extern Plan sch_greedy(Prob prob);
@@ -50,7 +49,7 @@ Plan sch_genetic(Prob prob)  {
   data.stat_crossovers  = 0;
 
   pop_append(youngs, sch_greedy(prob));
-  for (int i=0; i < NB_INIT_RANDOM; i++) {
+  for (int i=0; i < POP_SIZE; i++) {
     Plan p = sch_random(prob);
     pop_insert(youngs, p);
   }
@@ -94,7 +93,7 @@ Plan sch_genetic(Prob prob)  {
         id_m += pop_copy_append(buffer, matures, id_m);
     }
     printf("%4d %4d - %4d - ", id_m, id_y, plan_duration(pop_get(buffer,0)));
-    data.mutations_left = (2 * POP_SIZE) + ((2 * id_m * id_m) / POP_SIZE) - (4 * id_m);
+    data.mutations_left = (1 * POP_SIZE) + ((1 * id_m * id_m) / POP_SIZE) - (2 * id_m);
 
     for (; id_m < pop_size(matures); id_m++) plan_free(pop_get(matures, id_m));
     pop_reset(matures);
@@ -107,13 +106,14 @@ Plan sch_genetic(Prob prob)  {
 
     // Generate youngs from matures 
 
+    max_m = pop_size(matures);
     data.best_duration = plan_duration(pop_get(matures, 0));
+    int median_duration = plan_duration(pop_get(matures, max_m / 2));
 
     data.youngs = youngs;
 //    data.mutations_left = POP_SIZE;
-    int crossovers_left = POP_SIZE + (POP_SIZE / 2);
+    int crossovers_left = POP_SIZE + (POP_SIZE / 4) - data.mutations_left;
     printf("%4d %4d\n", data.mutations_left, crossovers_left);
-    max_m = pop_size(matures);
 
     long div;
     int proba;
@@ -127,10 +127,10 @@ Plan sch_genetic(Prob prob)  {
       // Mutations
       if (data.mutations_left > 0) {
         div = (max_m - id_m) * 7 * nb_job * duration_m;
-        if (9 * data.mutations_left * data.best_duration >= div)
+        if (9 * data.mutations_left * median_duration >= div)
           proba = RAND_MAX;
         else
-          proba = (RAND_MAX / (int)(div / data.best_duration)) * 9 * data.mutations_left ;
+          proba = (RAND_MAX / (int)(div / median_duration)) * 9 * data.mutations_left ;
 //        printf("  m %14ld %10d ", div, proba);
         int dice = rand();
         if (dice <= proba) {
@@ -150,10 +150,10 @@ Plan sch_genetic(Prob prob)  {
       // Crossover
       if (crossovers_left > 0) {
         div = (long)(max_m - id_m) * (long)(max_m - (1 + id_m)) * (long)duration_m;
-        if (crossovers_left * data.best_duration >= div)
+        if (crossovers_left * median_duration >= div)
           proba = rand();
         else
-          proba = (RAND_MAX / (int)(div / data.best_duration)) * crossovers_left;
+          proba = (RAND_MAX / (int)(div / median_duration)) * crossovers_left;
 //        printf("c %14ld %10d\n", div, proba);
         for (int i = id_m + 1; i < max_m; i++) {
           int dice = rand();
