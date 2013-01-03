@@ -1,6 +1,12 @@
 *.swp
 *~
 *.o
+sample/*.txt
+sample/abz?
+sample/ft??
+sample/orb??
+sample/swv??
+sample/yn?
 gmon.out
 a.out
 jobshop
