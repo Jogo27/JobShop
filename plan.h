@@ -13,6 +13,7 @@ struct plan;
 typedef struct plan * Plan;
 
 extern Plan   plan_create(Prob prob);
+extern Plan   plan_clone(Plan plan);
 extern result plan_free(Plan plan);
 
 

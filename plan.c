@@ -10,11 +10,11 @@ struct plan {
 };
 
 
-Plan plan_create_empty(Prob prob) {
+Plan plan_create_empty(ushort nb_res) {
   Plan plan = malloc(sizeof(struct plan));
   if (plan == NULL) return NULL;
 
-  plan->nb_res = prob_res_count(prob);
+  plan->nb_res = nb_res;
   plan->res = calloc(plan->nb_res, sizeof(Ressource));
   if (plan->res == NULL) {
     free(plan);
@@ -25,7 +25,7 @@ Plan plan_create_empty(Prob prob) {
 }
 
 Plan plan_create(Prob prob) {
-  Plan plan = plan_create_empty(prob);
+  Plan plan = plan_create_empty(prob_res_count(prob));
   if (plan == NULL) return NULL;
 
   for (int i=0; i < plan->nb_res; i++) {
@@ -39,6 +39,16 @@ Plan plan_create(Prob prob) {
   }
 
   return plan;
+}
+
+Plan plan_clone(Plan plan) {
+  Plan ret = plan_create_empty(plan->nb_res);
+  if (ret == NULL) return NULL;
+
+  for (int i=0; i < ret->nb_res; i++)
+    ret->res[i] = res_clone(plan->res[i]);
+
+  return ret;
 }
 
 result plan_free(Plan plan) {
@@ -194,18 +204,16 @@ Plan plan_merge_res(Plan plan_a, Plan plan_b, Prob prob) {
   if ((plan_a == NULL) || (plan_b == NULL)) die("NULL plan for plan_merge\n");
   if ((plan_a->nb_res != plan_b->nb_res) || (plan_a->nb_res != prob_res_count(prob))) die("Plans' size doesn't match in plan_merge\n");
 
-  Plan draft = plan_create_empty(prob);
+  Plan draft = plan_create_empty(plan_a->nb_res);
   if (draft == NULL) return NULL;
 
   int makespan_a = plan_duration(plan_a);
   int makespan_b = plan_duration(plan_b);
   for (int i=0; i < plan_a->nb_res; i++) {
-    if (res_duration(plan_a->res[i]) == makespan_a) {
-      if ((makespan_a < makespan_b) && (res_duration(plan_b->res[i]) == makespan_b))
-        draft->res[i] = res_clone(plan_a->res[i]);
-      else
+    if ((res_duration(plan_a->res[i]) == makespan_a) && (res_duration(plan_b->res[i]) != makespan_b))
         draft->res[i] = res_clone(plan_b->res[i]);
-    }
+    else if ((res_duration(plan_b->res[i]) == makespan_b) && (res_duration(plan_a->res[i]) != makespan_a))
+        draft->res[i] = res_clone(plan_a->res[i]);
     else
       draft->res[i] = res_clone(((rand() & 1) ? plan_a : plan_b)->res[i]);
   }
@@ -219,7 +227,7 @@ Plan plan_merge_task(Plan plan_a, Plan plan_b, Prob prob) {
   if ((plan_a == NULL) || (plan_b == NULL)) die("NULL plan for plan_merge\n");
   if ((plan_a->nb_res != plan_b->nb_res) || (plan_a->nb_res != prob_res_count(prob))) die("Plans' size doesn't match in plan_merge\n");
 
-  Plan draft = plan_create_empty(prob);
+  Plan draft = plan_create_empty(plan_a->nb_res);
   if (draft == NULL) return NULL;
 
   int makespan_a = plan_duration(plan_a);
