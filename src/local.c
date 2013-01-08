@@ -7,6 +7,7 @@ extern Plan sch_greedy(Prob prob);
 
 void local_aux(Plan plan, void * data) {
 //  plan_output(plan, stdout);
+//  if (plan == NULL) return;
   if (*((Plan *)data) == NULL) {
     *((Plan *)data) = plan;
   }
@@ -108,13 +109,13 @@ Plan sch_tabou(Prob prob) {
   Plan current = plan_clone(best);
 
   ushort nb_res = prob_res_count(prob);
-  ushort max_repetitions = 100 * nb_res;
+  ushort max_repetitions = prob_job_count(prob) * nb_res * nb_res;
   ushort res_id = 0;
   ushort count = 0;
   for (int i=0; i < max_repetitions; i++) {
     count += 1;
     Plan neighbour = NULL;
-    plan_neighbourhood_one(current, res_id, prob, &local_aux, &neighbour);
+    plan_neighbourhood_perm(current, res_id, prob, &local_aux, &neighbour);
     if (neighbour == NULL)
       i = max_repetitions;
     else {

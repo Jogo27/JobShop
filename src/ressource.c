@@ -167,18 +167,20 @@ ushort res_task_jobstart(Ressource res, ushort task_id) {
   return res->tasks[task_id].jobstart;
 }
 
-int res_swap(Ressource res, ushort task_a_id, ushort task_b_id) {
+int res_move(Ressource res, ushort a, ushort b) {
   if ((res == NULL) || (res->nb_refs != 1) ||
-      (task_a_id >= res->max_pos) || (task_b_id >= res->max_pos) ) return FAIL;
+      (a >= res->max_pos) || (b >= res->max_pos) ) return FAIL;
+  if (a == b) return OK;
 
-  Task * buffer = malloc(sizeof(Task));
-  if (buffer == NULL) return FAIL;
+  Task buffer;
 
-  memcpy(buffer,                 &res->tasks[task_a_id], sizeof(Task));
-  memcpy(&res->tasks[task_a_id], &res->tasks[task_b_id], sizeof(Task));
-  memcpy(&res->tasks[task_b_id], buffer,                 sizeof(Task));
+  memcpy(&buffer, &res->tasks[a], sizeof(Task));
+  if (a < b)
+    memmove(&res->tasks[a], &res->tasks[a + 1], (b - a) * sizeof(Task));
+  else
+    memmove(&res->tasks[b + 1], &res->tasks[b], (a - b) * sizeof(Task));
+  memcpy(&res->tasks[b], &buffer, sizeof(Task));
   
-  free(buffer);
   return OK;
 }
 

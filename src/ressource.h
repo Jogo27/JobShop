@@ -38,8 +38,8 @@ extern ushort res_task_duration(Ressource res, ushort task_id);
 extern ushort res_task_start   (Ressource res, ushort task_id);
 extern ushort res_task_jobstart(Ressource res, ushort task_id);
 
-// Swap tasks a and b
-extern int res_swap(Ressource res, ushort task_a_id, ushort task_b_id);
+// Move task a at position b
+extern int res_move(Ressource res, ushort task_a_id, ushort task_b_id);
 
 // Create a random crossover which keeps the common partial ordering of tasks.
 // The resulting ressource contains arbitrary jobstarts and durations (it has to be replayed).

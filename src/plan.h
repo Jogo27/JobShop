@@ -32,6 +32,8 @@ extern void plan_neighbourhood(Plan plan, Prob prob,
                         void (*function)(Plan,void *), void * function_data);
 extern void plan_neighbourhood_one(Plan plan, ushort res_id, Prob prob,
                         void (*function)(Plan,void *), void * function_data);
+extern void plan_neighbourhood_perm(Plan plan, ushort res_id, Prob prob,
+                        void (*function)(Plan,void *), void * function_data);
 
 // Only compute neighbourhood for worse duration ressources
 extern void plan_neighbourhood_worse(Plan plan, Prob prob,

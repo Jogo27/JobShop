@@ -147,9 +147,9 @@ static Plan plan_replay(Plan plan, Prob prob) {
   return ret;
 }
 
-static Plan plan_replay_swap(Plan plan, Prob prob, ushort res_id, ushort task_a_id, ushort task_b_id) {
-  if ((plan == NULL) || (prob == NULL)) die("NULL argument to plan_replay_swap\n");
-  if (res_id >= plan->nb_res) die("res_id out of bounds for plan_replay_swap\n");
+static Plan plan_replay_move(Plan plan, Prob prob, ushort res_id, ushort task_a_id, ushort task_b_id) {
+  if ((plan == NULL) || (prob == NULL)) die("NULL argument to plan_replay_move\n");
+  if (res_id >= plan->nb_res) die("res_id out of bounds for plan_replay_move\n");
 
   Plan nplan = plan_create_empty(plan->nb_res);
   if (nplan == NULL) return NULL;
@@ -157,7 +157,7 @@ static Plan plan_replay_swap(Plan plan, Prob prob, ushort res_id, ushort task_a_
   for (int i=0; i < nplan->nb_res; i++) {
     if (i == res_id) {
       nplan->res[i] = res_copy(plan->res[i]);
-      res_swap(nplan->res[i], task_a_id, task_b_id);
+      res_move(nplan->res[i], task_a_id, task_b_id);
     }
     else {
       nplan->res[i] = res_clone(plan->res[i]);
@@ -177,8 +177,25 @@ plan_neighbourhood_one(Plan plan, ushort res_id, Prob prob, void (*function)(Pla
 
   for (int task_id = 0; task_id + 1 < res_max_task_id(plan->res[res_id]); task_id++) {
     if (res_task_jobstart(res, task_id + 1) < res_task_start(res, task_id) + res_task_duration(res, task_id)) {
-      Plan nplan = plan_replay_swap(plan, prob, res_id, task_id, task_id + 1);
+      Plan nplan = plan_replay_move(plan, prob, res_id, task_id, task_id + 1);
       (*function)(nplan, function_data);
+    }
+  }
+}
+
+void
+plan_neighbourhood_perm(Plan plan, ushort res_id, Prob prob, void (*function)(Plan,void *), void * function_data) {
+  if ((plan == NULL) || (prob == NULL) || (function == NULL)) die("NULL argument to plan_neighbourhood_one\n");
+  if (res_id > plan->nb_res) die("res_id out of bound for plan_neighbourhood_one\n"); 
+  Ressource res = plan->res[res_id];
+
+  for (int i = 0; i + 1 < res_max_task_id(plan->res[res_id]); i++) {
+    int termination = res_task_start(res, i) + res_task_duration(res, i);
+    for (int j = i + 1; j < res_max_task_id(plan->res[res_id]); j++) {
+      if (res_task_jobstart(res, j) < termination) {
+        Plan nplan = plan_replay_move(plan, prob, res_id, j, i);
+        (*function)(nplan, function_data);
+      }
     }
   }
 }
@@ -215,7 +232,7 @@ Plan plan_reduce_critical_path(Plan plan, Prob prob) {
   while ((task_id > 0) &&
          (res_task_jobstart(res, task_id) <= res_task_start(res, task_id - 1) + res_task_duration(res, task_id - 1))) {
 //    if (res_task_jobstart(res, task_id) < res_task_start(res, task_id - 1))
-//      return plan_replay_swap(plan, prob, res_id, task_id, task_id - 1);
+//      return plan_replay_move(plan, prob, res_id, task_id, task_id - 1);
     task_id -= 1;
   }
   debug("task %d ", task_id);
@@ -229,6 +246,7 @@ Plan plan_reduce_critical_path(Plan plan, Prob prob) {
   debug("job %d op %d ", job_id, op_id);
   
   // Search a permutation
+  int jobstart;
   do {
     if (op_id == 0)
       return NULL;
@@ -239,11 +257,13 @@ Plan plan_reduce_critical_path(Plan plan, Prob prob) {
       return NULL;
     task_id = 1;
     while (res_task_job(res, task_id) != job_id) task_id += 1;
-  } while (res_task_jobstart(res, task_id) == res_task_start(res, task_id));
-  debug("perm %d ", task_id);
-  debug("diff %d ", res_task_jobstart(res, task_id) - res_task_start(res, task_id - 1));
+    jobstart = res_task_jobstart(res, task_id);
+  } while (jobstart == res_task_start(res, task_id));
+  ushort move_to = task_id - 1;
+  while ((move_to > 0) && (jobstart < res_task_start(res, move_to))) move_to -= 1;
+  debug("perm %d with %d ", task_id, move_to);
 
-  return plan_replay_swap(plan, prob, res_id, task_id, task_id - 1);
+  return plan_replay_move(plan, prob, res_id, task_id, move_to);
 }
 
 Plan plan_merge_res(Plan plan_a, Plan plan_b, Prob prob) {
