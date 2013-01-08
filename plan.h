@@ -37,6 +37,8 @@ extern void plan_neighbourhood_one(Plan plan, ushort res_id, Prob prob,
 extern void plan_neighbourhood_worse(Plan plan, Prob prob,
                         void (*function)(Plan,void *), void * function_data);
 
+extern Plan plan_reduce_critical_path(Plan plan, Prob prob);
+
 extern Plan plan_merge_res(Plan plan_a, Plan plan_b, Prob prob);
 extern Plan plan_merge_task(Plan plan_a, Plan plan_b, Prob prob);
 

@@ -72,6 +72,12 @@ ushort job_curop_res(Job job) {
   return job->op[job->cur_pos].res;
 }
 
+ushort job_op_res(Job job, ushort op_id) {
+  if (job == NULL) die("NULL pointer for job_op_res\n");
+  if (op_id >= job->max_pos) die("op_id out of bounds for job_op_res\n");
+  return job->op[op_id].res;
+}
+
 ushort job_curop_duration(Job job) {
   if (job == NULL) die("NULL pointer for job_curop_duration\n");
   if (job->cur_pos >= job->max_pos) die("No more op in job_curop_duration\n");

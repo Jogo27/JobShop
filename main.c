@@ -42,6 +42,7 @@ void info(const char *format, ...) {
 extern Plan sch_random(Prob prob);
 extern Plan sch_greedy(Prob prob);
 extern Plan sch_localy(Prob prob);
+extern Plan sch_local_opt(Prob prob);
 extern Plan sch_tabou(Prob prob);
 extern Plan sch_genetic(Prob prob);
 
@@ -65,6 +66,9 @@ int main(int argc, char ** argv) {
         break;
       case 'l':
         algo = &sch_localy;
+        break;
+      case 'L':
+        algo = &sch_local_opt;
         break;
       case 't':
         algo = &sch_tabou;
@@ -101,9 +105,9 @@ int main(int argc, char ** argv) {
     clock_t c = clock();
     Plan plan = (*algo)(prob);
     c = clock() - c;
-    printf(" makespan %4d duration %.1f s\n",
+    printf(" makespan %4d duration %.2f s\n",
         plan_duration(plan),
-        (double)c / (double)CLOCKS_PER_SEC);
+        ((double) c) / ((double) CLOCKS_PER_SEC));
     if (output_plan) plan_output(plan, stdout);
 
     plan_free(plan);

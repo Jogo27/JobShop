@@ -36,6 +36,9 @@ extern int job_curop_minstart(Job job);
 // The ressource id of the next operation to schedule
 extern ushort job_curop_res(Job job);
 
+// The ressource id of an arbitrary operation
+extern ushort job_op_res(Job job, ushort op_id);
+
 // The duration of the next operation to schedule
 extern ushort job_curop_duration(Job job);
 

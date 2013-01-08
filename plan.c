@@ -109,8 +109,7 @@ void plan_output(Plan plan, FILE * stream) {
   }
 }
 
-Plan
-plan_replay(Plan plan, Prob prob) {
+static Plan plan_replay(Plan plan, Prob prob) {
   if ((plan == NULL) || (prob == NULL)) die("NULL argument to plan_replay\n");
 
   Plan ret = plan_create(prob);
@@ -148,6 +147,28 @@ plan_replay(Plan plan, Prob prob) {
   return ret;
 }
 
+static Plan plan_replay_swap(Plan plan, Prob prob, ushort res_id, ushort task_a_id, ushort task_b_id) {
+  if ((plan == NULL) || (prob == NULL)) die("NULL argument to plan_replay_swap\n");
+  if (res_id >= plan->nb_res) die("res_id out of bounds for plan_replay_swap\n");
+
+  Plan nplan = plan_create_empty(plan->nb_res);
+  if (nplan == NULL) return NULL;
+
+  for (int i=0; i < nplan->nb_res; i++) {
+    if (i == res_id) {
+      nplan->res[i] = res_copy(plan->res[i]);
+      res_swap(nplan->res[i], task_a_id, task_b_id);
+    }
+    else {
+      nplan->res[i] = res_clone(plan->res[i]);
+    }
+  }
+
+  Plan ret = plan_replay(nplan, prob);
+  plan_free(nplan);
+  return ret;
+}
+
 void
 plan_neighbourhood_one(Plan plan, ushort res_id, Prob prob, void (*function)(Plan,void *), void * function_data) {
   if ((plan == NULL) || (prob == NULL) || (function == NULL)) die("NULL argument to plan_neighbourhood_one\n");
@@ -156,26 +177,8 @@ plan_neighbourhood_one(Plan plan, ushort res_id, Prob prob, void (*function)(Pla
 
   for (int task_id = 0; task_id + 1 < res_max_task_id(plan->res[res_id]); task_id++) {
     if (res_task_jobstart(res, task_id + 1) < res_task_start(res, task_id) + res_task_duration(res, task_id)) {
-
-      Plan nplan = malloc(sizeof(struct plan));
-      if (nplan == NULL) die("Unable to allocate neighbour plan\n");
-
-      nplan->nb_res = plan->nb_res;
-      nplan->res = calloc(nplan->nb_res, sizeof(Ressource));
-      if (nplan->res == NULL) die("Unable to allocate ressources for neighbour plan\n");
-
-      for (int i=0; i < nplan->nb_res; i++) {
-        if (i == res_id) {
-          nplan->res[i] = res_copy(plan->res[i]);
-          res_swap(nplan->res[i], task_id, task_id + 1);
-        }
-        else {
-          nplan->res[i] = res_clone(plan->res[i]);
-        }
-      }
-
-      (*function)(plan_replay(nplan,prob), function_data);
-      plan_free(nplan);
+      Plan nplan = plan_replay_swap(plan, prob, res_id, task_id, task_id + 1);
+      (*function)(nplan, function_data);
     }
   }
 }
@@ -196,6 +199,51 @@ plan_neighbourhood(Plan plan, Prob prob, void (*function)(Plan,void *), void * f
 
   for (int res_id = 0; res_id < plan->nb_res; res_id++)
     plan_neighbourhood_one(plan, res_id, prob, function, function_data);
+}
+
+Plan plan_reduce_critical_path(Plan plan, Prob prob) {
+  if ((plan == NULL) || (prob == NULL)) die("NULL argument to plan_reduce_critical_path\n");
+
+  int duration = plan_duration(plan);
+  ushort res_id = 0;
+  while (res_duration(plan->res[res_id]) < duration) res_id += 1;
+  debug("res %d ", res_id);
+
+  // Search for inactivity of the critical ressource
+  Ressource res = plan->res[res_id];
+  ushort task_id = res_max_task_id(plan->res[res_id]) - 1;
+  while ((task_id > 0) &&
+         (res_task_jobstart(res, task_id) <= res_task_start(res, task_id - 1) + res_task_duration(res, task_id - 1))) {
+//    if (res_task_jobstart(res, task_id) < res_task_start(res, task_id - 1))
+//      return plan_replay_swap(plan, prob, res_id, task_id, task_id - 1);
+    task_id -= 1;
+  }
+  debug("task %d ", task_id);
+  if (task_id <= 0) return NULL;
+
+  // Get the corresponding operation
+  ushort job_id = res_task_job(res, task_id);
+  Job job = prob_get_job(prob, job_id);
+  ushort op_id = 1;
+  while (job_op_res(job, op_id) != res_id) op_id += 1;
+  debug("job %d op %d ", job_id, op_id);
+  
+  // Search a permutation
+  do {
+    if (op_id == 0)
+      return NULL;
+    op_id -= 1;
+    res_id = job_op_res(job, op_id);
+    res = plan->res[res_id];
+    if (res_task_job(res, 0) == job_id)
+      return NULL;
+    task_id = 1;
+    while (res_task_job(res, task_id) != job_id) task_id += 1;
+  } while (res_task_jobstart(res, task_id) == res_task_start(res, task_id));
+  debug("perm %d ", task_id);
+  debug("diff %d ", res_task_jobstart(res, task_id) - res_task_start(res, task_id - 1));
+
+  return plan_replay_swap(plan, prob, res_id, task_id, task_id - 1);
 }
 
 Plan plan_merge_res(Plan plan_a, Plan plan_b, Prob prob) {

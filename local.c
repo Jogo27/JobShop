@@ -40,6 +40,67 @@ Plan sch_localy(Prob prob) {
 }
 
 
+//Plan sch_local_opt(Prob prob) {
+//  Plan best = sch_greedy(prob);
+//  Plan next;
+//  int duration = plan_duration(best);
+//
+//  ushort max_repetitions = prob_res_count(prob) + prob_job_count(prob);
+//  ushort count = 0;
+//  for (int i=0; i < max_repetitions; i++) {
+//    count += 1;
+//    next = plan_reduce_critical_path(best, prob);
+//    if (next == NULL) {
+//      i = max_repetitions;
+//      debug("\n");
+//    }
+//    else {
+//      plan_free(best);
+//      best = next;
+//      int tmp_duration = plan_duration(best);
+//      debug("makespan %d\n", tmp_duration);
+//      if (tmp_duration < duration) {
+//        duration = tmp_duration;
+//        i = 0;
+//      }
+//    }
+//  }
+//
+//  info("%3d iterations", count);
+//  return best;
+//}
+
+
+Plan sch_local_opt(Prob prob) {
+  Plan best = sch_greedy(prob);
+  Plan current = plan_clone(best);
+
+  ushort max_repetitions = prob_res_count(prob) + prob_job_count(prob);
+  ushort count = 0;
+  for (int i=0; i < max_repetitions; i++) {
+    count += 1;
+    Plan neighbour = plan_reduce_critical_path(best, prob);
+    if (neighbour == NULL) {
+      i = max_repetitions;
+      debug("\n");
+    }
+    else {
+      int duration = plan_duration(neighbour);
+      debug("makespan %d\n", duration);
+      if (plan_duration(neighbour) < plan_duration(best)) {
+        plan_free(best);
+        best = plan_clone(neighbour);
+        i = 0;
+      }
+      plan_free(current);
+      current = neighbour;
+    }
+  }
+
+  plan_free(current);
+  info("%3d iterations", count);
+  return best;
+}
 
 
 Plan sch_tabou(Prob prob) {
