@@ -1,0 +1,56 @@
+\documentclass{rapport}
+\usepackage{josty}
+
+
+\begin{document}
+
+\title{Jobshop : Méthodes approchées}
+\subtitle{Compte-rendu du projet de TP «~Optimisation Combinatoire~»}
+\author{Joseph Boudou}
+\date{14 janvier 2013}
+\maketitle
+
+\section{Présentation}
+
+\section{Évaluation des algorithmes}
+
+\section{Codages}
+
+\section{Heuristique gloutonne}
+
+L'heuristique implémentée est de type «~Earliest Due Date~» (EDD).
+
+Pour chaque job et chaque ressource, on maintient la date minimale de début de la prochaine
+opération : $sj_j$ pour chaque job $j$ et $sr_k$ pour chaque ressource $k$. Ces dates sont
+initialisées à $0$. Après chaque affectation de la ressource $(i,j)$ à la ressource $k$, on met à
+jour ces dates :
+$$ sj_j \leftarrow sr_k \leftarrow \max (sj_j, sr_k) + p_{(i,j)} $$
+
+Notons $P$ l'ensemble des opérations qui ont déjà été affectée à une ressource et $k_{(i,j)}$
+la ressource nécessaire à l'opération $(i,j)$. On commence par sélectionner pour chaque job la
+prochaine opération disponible :
+$$ \forall j,~d_j = \min_{(i,j) \notin P} i $$
+Pour chacune de ces opérations on détermine la date possible de lancement
+$$ \forall j,~so_j = \max (sj_j, sr_{k_{(d_j,j)}}) $$
+Ensuite on ne garde que les opérations dont la date $so_j$ est minimale
+$$ S_1 = \left\{ j ~|~ so_j = \min_{j'} {so_{j'}} \right\} $$
+On calcule la durée restante de travail pour chaque job de $S_1$
+$$ \forall j \in S_1,~ W_j = \sum_{i \geq d_j}{p_{(i,j)}} $$
+Et on ne garde que les jobs dont la durée restante est maximale
+$$ S_2 = \left\{ j \in S_1 ~|~ W_j = \max_{j' \in S_1}{W_{j'}} \right\} $$
+Enfin, au cas où $S_2$ ne serait pas un singleton, on sélectione le job d'indice maximum
+$$ j^* = \max S_2 $$
+On affecte alors $(d_{j^*}, j^*)$ à sa ressource $k$ et on met à jour $P$, $sj_{j}$ et $sr_k$.
+
+
+
+\section{Voisinages et recherches locales}
+
+\section{Algorithme génétique}
+
+\section{Conclusion}
+
+
+\end{document}
+
+% vim: tw=100
