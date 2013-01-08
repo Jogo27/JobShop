@@ -3,9 +3,16 @@ CFLAGS = -std=c99 -g
 LDFLAGS = -g
 
 SRCS = main.c job.c ressource.c prob.c plan.c random.c greedy.c local.c population.c ngenetic.c
-OBJS = $(SRCS:.c=.o)
+OBJS = $(addprefix lib/,$(SRCS:.c=.o))
 
 all: jobshop
+
+#vpath %.o lib
+vpath %.c src
+vpath %.h src
+
+lib/%.o : %.c
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 jobshop: ${OBJS}
 	${CC} $^ -o $@ ${LDFLAGS}
@@ -22,6 +29,6 @@ population.o: population.h main.h plan.h
 ngenetic.o: main.h plan.h prob.h population.h
 
 clean:
-	rm *.o jobshop
+	rm lib/*.o jobshop
 
 PHONY: all clean
