@@ -20,6 +20,7 @@ die(const char *errstr, ...) {
 }
 
 char debug_mode = 0;
+char repetitions = 1;
 
 void debug(const char *format, ...) {
   if (debug_mode) {
@@ -31,12 +32,12 @@ void debug(const char *format, ...) {
 }
 
 void info(const char *format, ...) {
-//  if (!debug_mode) {
+  if (debug_mode || (repetitions == 1)) {
     va_list ap;
     va_start(ap, format);
     vprintf(format, ap);
     va_end(ap);
-//  }
+  }
 }
 
 extern Plan sch_random(Prob prob);
@@ -47,7 +48,7 @@ extern Plan sch_tabou(Prob prob);
 extern Plan sch_genetic(Prob prob);
 
 void print_help(FILE * stream, char * prog) {
-  fprintf(stream, "Usage: %s [-d] [-r|-g|-l|-t|-G] <file>\n", prog);
+  fprintf(stream, "Usage: %s [-d] [-n <repetitions>] [-r|-g|-l|-t|-G] <file>\n", prog);
   exit(1);
 }
 
@@ -79,6 +80,10 @@ int main(int argc, char ** argv) {
       case 'd':
         debug_mode = 1;
         break;
+      case 'n':
+        arg += 1;
+        repetitions = atoi(argv[arg]);
+        break;
       case 'h':
         print_help(stdout,argv[0]);
         break;
@@ -89,7 +94,7 @@ int main(int argc, char ** argv) {
     }
     arg += 1;
   }
-  char output_plan = debug_mode || ((arg + 1) == argc);
+  char output_plan = (debug_mode || ((arg + 1) == argc)) && (repetitions == 1);
 
   // Main
   for (; arg < argc; arg++) {
@@ -102,12 +107,20 @@ int main(int argc, char ** argv) {
     Prob prob = prob_parse(file);
     fclose(file);
 
-    clock_t c = clock();
-    Plan plan = (*algo)(prob);
-    c = clock() - c;
-    printf(" makespan %4d duration %.2f s\n",
-        plan_duration(plan),
-        ((double) c) / ((double) CLOCKS_PER_SEC));
+    long duration = 0;
+    long makespan = 0;
+    Plan plan = NULL;
+    for (int i=0; i < repetitions; i++) {
+      if (plan != NULL) plan_free(plan);
+      clock_t c = clock();
+      plan = (*algo)(prob);
+      duration += clock() - c;
+      makespan += plan_duration(plan);
+    }
+    printf(" makespan %4.2f duration %.2f s\n",
+        (double)makespan / (double) repetitions,
+        (double)duration / (double)((long)CLOCKS_PER_SEC * (long)repetitions)
+    );
     if (output_plan) plan_output(plan, stdout);
 
     plan_free(plan);

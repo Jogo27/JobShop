@@ -1,11 +1,12 @@
 #include <stdlib.h>
+#include <limits.h>
 
 #include "main.h"
 #include "plan.h"
 #include "prob.h"
 #include "population.h"
 
-#define NB_GENERATIONS 1000
+#define NB_GENERATIONS 500
 
 extern Plan sch_random(Prob prob);
 extern Plan sch_greedy(Prob prob);
@@ -47,6 +48,7 @@ Plan sch_genetic(Prob prob)  {
   data.stat_generations = 0;
   data.stat_mutations   = 0;
   data.stat_crossovers  = 0;
+  data.best_duration = INT_MAX;
 
   pop_append(youngs, sch_greedy(prob));
   for (int i=0; i < POP_SIZE; i++) {
@@ -54,64 +56,78 @@ Plan sch_genetic(Prob prob)  {
     pop_insert(youngs, p);
   }
 
-  for (; (pop_size(youngs) > 0) && (data.stat_generations < NB_GENERATIONS); data.stat_generations++) {
+  ushort id_m;
+  for (unsigned int immobility = 0; immobility < NB_GENERATIONS; data.stat_generations++) {
     debug("%03d %4d %4d ", data.stat_generations, pop_size(matures), pop_size(youngs));
-    
-    // Merge youngs and matures into matures
 
-    ushort id_m = 0;
-    ushort id_y = 0;
-    ushort max_m = MIN(POP_SIZE / 2, pop_size(matures));
-    ushort max_y = pop_size(youngs);
+    if (pop_size(youngs) == 0) {
+      debug("          ");
+      immobility += 10;
+    }
+    else {
 
-    while ( (id_y < max_y) && (pop_size(buffer) < POP_SIZE)  &&
-            ( (id_m < max_m) || ((id_m < pop_size(matures)) && ((max_y - id_y) < (POP_SIZE - pop_size(buffer)))) )
-          ) {
-      Plan plan_m = pop_get(matures, id_m);
-      Plan plan_y = pop_get(youngs,  id_y);
-      int duration_m = plan_duration(plan_m);
-      int duration_y = plan_duration(plan_y);
+      if (plan_duration(pop_get(youngs,0)) < data.best_duration)
+        immobility = 0;
+      else
+        immobility += 1;
+      
+      // Merge youngs and matures into matures
 
-      if (duration_m < duration_y) {
-        pop_append(buffer, plan_m);
-        id_m += 1;
-      }
-      else {
-        pop_append(buffer, plan_y);
-        id_y += 1;
-        if ((duration_m == duration_y) && plan_equals(plan_m, plan_y)) {
-          plan_free(plan_m);
+      id_m = 0;
+      ushort id_y = 0;
+      ushort max_m = MIN(POP_SIZE / 4 + 1 , pop_size(matures));
+//      ushort max_m = MIN(1 + POP_SIZE - (immobility * POP_SIZE / NB_GENERATIONS), pop_size(matures));
+      ushort max_y = pop_size(youngs);
+
+      while ( (id_y < max_y) && (pop_size(buffer) < POP_SIZE)  &&
+              ( (id_m < max_m) || ((id_m < pop_size(matures)) && ((max_y - id_y) < (POP_SIZE - pop_size(buffer)))) )
+            ) {
+        Plan plan_m = pop_get(matures, id_m);
+        Plan plan_y = pop_get(youngs,  id_y);
+        int duration_m = plan_duration(plan_m);
+        int duration_y = plan_duration(plan_y);
+
+        if (duration_m < duration_y) {
+          pop_append(buffer, plan_m);
           id_m += 1;
         }
+        else {
+          pop_append(buffer, plan_y);
+          id_y += 1;
+          if ((duration_m == duration_y) && plan_equals(plan_m, plan_y)) {
+            plan_free(plan_m);
+            id_m += 1;
+          }
+        }
       }
+
+      if (pop_size(buffer) < POP_SIZE) {
+        if (id_y <max_y)
+          id_y += pop_copy_append(buffer, youngs, id_y);
+        else
+          id_m += pop_copy_append(buffer, matures, id_m);
+      }
+      debug("%4d %4d ", id_m, id_y);
+
+      for (; id_m < pop_size(matures); id_m++) plan_free(pop_get(matures, id_m));
+      pop_reset(matures);
+      for (; id_y < pop_size(youngs);  id_y++) plan_free(pop_get(youngs,  id_y));
+      pop_reset(youngs);
+
+      Population tmp_pop = matures;
+      matures = buffer;
+      buffer  = tmp_pop;
     }
-
-    if (pop_size(buffer) < POP_SIZE) {
-      if (id_y <max_y)
-        id_y += pop_copy_append(buffer, youngs, id_y);
-      else
-        id_m += pop_copy_append(buffer, matures, id_m);
-    }
-    debug("%4d %4d - %4d - ", id_m, id_y, plan_duration(pop_get(buffer,0)));
-    data.mutations_left = (1 * POP_SIZE) + ((1 * id_m * id_m) / POP_SIZE) - (2 * id_m);
-
-    for (; id_m < pop_size(matures); id_m++) plan_free(pop_get(matures, id_m));
-    pop_reset(matures);
-    for (; id_y < pop_size(youngs);  id_y++) plan_free(pop_get(youngs,  id_y));
-    pop_reset(youngs);
-
-    Population tmp_pop = matures;
-    matures = buffer;
-    buffer  = tmp_pop;
+    debug("- %4d - ", plan_duration(pop_get(matures,0)));
 
     // Generate youngs from matures 
 
-    max_m = pop_size(matures);
+    ushort max_m = pop_size(matures);
     data.best_duration = plan_duration(pop_get(matures, 0));
     int median_duration = plan_duration(pop_get(matures, max_m / 2));
 
     data.youngs = youngs;
-//    data.mutations_left = POP_SIZE;
+    data.mutations_left = immobility * POP_SIZE / NB_GENERATIONS;
     int crossovers_left = POP_SIZE - data.mutations_left;
     debug("%4d %4d\n", data.mutations_left, crossovers_left);
 
