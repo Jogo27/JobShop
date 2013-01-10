@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Heuristique gloutonne
+ */
+
 #include <limits.h>
 
 #include "prob.h"

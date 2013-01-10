@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Structure de données pour les solutions
+ */
+
 #include "plan.h"
 
 #include <stdlib.h>

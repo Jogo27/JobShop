@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Structure de données pour les populations (ensemble ordonné de solutions)
+ */
+
 #ifndef POPULATION_H
 #define POPULATION_H
 

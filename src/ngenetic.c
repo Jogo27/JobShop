@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Algorithme génétique
+ */
+
 #include <stdlib.h>
 #include <limits.h>
 

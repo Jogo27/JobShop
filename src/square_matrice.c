@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Matrices carrés
+ */
+
 #include <limits.h>
 #include <stdlib.h>
 
@@ -10,6 +18,8 @@ struct sq_mat {
   schar * tab;
 };
 typedef struct sq_mat * SqMat;
+
+// This file is meant to be included in plan.c. That's why static could be used.
 
 static SqMat sqmat_create(ushort size);
 

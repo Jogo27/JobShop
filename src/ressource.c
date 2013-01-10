@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Structure de données pour l'ordonnancement d'une seule ressource
+ */
+
 #include "ressource.h"
 
 #include <stdlib.h>

@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Programme principal
+ */
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>

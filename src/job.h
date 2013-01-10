@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Structure de donnée pour les jobs
+ */
+
 #ifndef JOB_H
 #define JOB_H
 

@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Descente locale
+ */
+
 #include "main.h"
 #include "plan.h"
 #include "prob.h"

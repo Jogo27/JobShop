@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Macros, types, constantes et fonctions globales
+ */
+
 #ifndef MAIN_H
 #define MAIN_H
 

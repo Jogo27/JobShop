@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Structure de données pour les instances du problème
+ */
+
 #ifndef PROB_H
 #define PROB_H
 

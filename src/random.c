@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Construction aléatoire d'une solution admissible
+ */
+
 #include <stdlib.h>
 
 #include "prob.h"

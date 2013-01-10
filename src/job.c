@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Structure de donnée pour les jobs
+ */
+
 #include "job.h"
 
 #include <stdlib.h>

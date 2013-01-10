@@ -1,3 +1,11 @@
+/* Joseph Boudou
+ * -------------
+ * TP JobShop
+ * Cours d'optimisation combinatoire
+ * -------------
+ * Structure de données pour les solutions
+ */
+
 #ifndef PLAN_H
 #define PLAN_H
 
