@@ -94,6 +94,21 @@ int plan_duration(Plan plan) {
   return duration;
 }
 
+int plan_sum_makespan(Plan plan) {
+  if (plan == NULL) die("NULL plan");
+  int first  = 0;
+  int second = 0;
+  for (int i=0; i < plan->nb_res; i++) {
+    int makespan = res_duration(plan->res[i]);
+    if (makespan > first) {
+      second = first;
+      first  = makespan;
+    }
+    else if (makespan > second)
+      second = makespan;
+  }
+  return first + second;
+}
 
 result plan_schedule(Plan plan, Prob prob, ushort job_id) {
   if ((plan == NULL) || (prob == NULL)) return FAIL;
@@ -299,23 +314,32 @@ Plan plan_merge_res(Plan plan_a, Plan plan_b, Prob prob) {
   return ret;
 }
 
-Plan plan_merge_task(Plan plan_a, Plan plan_b, Prob prob) {
+void plan_crossover_task (Plan plan_a, Plan plan_b, Prob prob,
+            Ressource * (*res_crossover)(Ressource,Ressource), process_new_plan function, void * function_data) {
   if ((plan_a == NULL) || (plan_b == NULL)) die("NULL plan for plan_merge\n");
   if ((plan_a->nb_res != plan_b->nb_res) || (plan_a->nb_res != prob_res_count(prob))) die("Plans' size doesn't match in plan_merge\n");
 
-  Plan draft = plan_create_empty(plan_a->nb_res);
-  if (draft == NULL) return NULL;
+  Plan draft_a = plan_create_empty(plan_a->nb_res);
+  if (draft_a == NULL) return;
+  Plan draft_b = plan_create_empty(plan_a->nb_res);
+  // We die here because we can't cleanly free draft_a
+  if (draft_b == NULL) die("Unable to allocate memory in plan_crossover_task\n");
 
-  int makespan_a = plan_duration(plan_a);
-  int makespan_b = plan_duration(plan_b);
   for (int i=0; i < plan_a->nb_res; i++) {
-    if (res_equals(plan_a->res[i], plan_b->res[i]))
-      draft->res[i] = res_clone(plan_a->res[i]);
-    else
-      draft->res[i] = res_crossover(plan_a->res[i], plan_b->res[i]);
+    if (res_equals(plan_a->res[i], plan_b->res[i])) {
+      draft_a->res[i] = res_clone(plan_a->res[i]);
+      draft_b->res[i] = res_clone(plan_a->res[i]);
+    }
+    else {
+      Ressource * res = (*res_crossover)(plan_a->res[i], plan_b->res[i]);
+      draft_a->res[i] = res[0];
+      draft_b->res[i] = res[1];
+      free(res);
+    }
   }
 
-  Plan ret = plan_replay(draft, prob);
-  plan_free(draft);
-  return ret;
+  (*function)(plan_replay(draft_a, prob), function_data);
+  (*function)(plan_replay(draft_b, prob), function_data);
+  plan_free(draft_a);
+  plan_free(draft_b);
 }

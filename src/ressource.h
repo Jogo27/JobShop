@@ -49,9 +49,9 @@ extern ushort res_task_jobstart(Ressource res, ushort task_id);
 // Move task a at position b
 extern int res_move(Ressource res, ushort task_a_id, ushort task_b_id);
 
-// Create a random crossover which keeps the common partial ordering of tasks.
+// Create two random crossovers which keeps the common partial ordering of tasks.
 // The resulting ressource contains arbitrary jobstarts and durations (it has to be replayed).
-extern Ressource res_crossover(Ressource res_a, Ressource res_b);
+extern Ressource * res_crossover_order(Ressource res_a, Ressource res_b);
 
 extern void res_output(Ressource res, FILE* stream);
 

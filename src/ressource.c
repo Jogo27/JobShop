@@ -219,24 +219,9 @@ SqMat res_incident_matrice(Ressource res) {
   return im;
 }
 
-Ressource res_crossover(Ressource res_a, Ressource res_b) {
-  res_verify(res_a);
-  res_verify(res_b);
-  if (res_a->max_pos != res_b->max_pos) die("Not matching ressources for res_crossover\n");
-
-  SqMat im_a = res_incident_matrice(res_a);
-  SqMat im_b = res_incident_matrice(res_b);
-  SqMat im_r = sqmat_add(im_a, im_b);
-  sqmat_free(im_a);
-  sqmat_free(im_b);
-  if (im_r == NULL) die("Unable to create the sum of incident matrices\n");
-
-  ushort size = res_a->max_pos;
+Ressource res_create_from_partial_order (SqMat order, ushort size) {
   Ressource res = res_create(size);
-  if (res == NULL) {
-    sqmat_free(im_r);
-    die("Unbale to create resulting ressource in res_crossover\n");
-  }
+  if (res == NULL) die("Unable to allocate ressource in res_create_from_partial_order\n");
 
   ushort id = rand() % size;
   while (res->max_pos < size) {
@@ -244,22 +229,45 @@ Ressource res_crossover(Ressource res_a, Ressource res_b) {
 
     schar v;
     do {
-      v = sqmat_get(im_r, id, y);
+      v = sqmat_get(order, id, y);
     } while (((v == -2) || (v == 0)) && (++y < size));
 
     if (y == size) {
       res_add_task_low(res, id, 0, 1);
-      sqmat_set(im_r, id, 0, SM_NULL);
+      sqmat_set(order, id, 0, SM_NULL);
       for (int i=0; i < size; i++)
-        if (sqmat_get(im_r, i, id) == 2) sqmat_set(im_r, i, id, 0);
+        if (sqmat_get(order, i, id) == 2) sqmat_set(order, i, id, 0);
       id = rand() % size;
     }
     else
       id = (id + 1) % size;
   }
 
-  sqmat_free(im_r);
   return res;
+}
+
+Ressource * res_crossover_order(Ressource res_a, Ressource res_b) {
+  res_verify(res_a);
+  res_verify(res_b);
+  if (res_a->max_pos != res_b->max_pos) die("Not matching ressources for res_crossover_order\n");
+
+  SqMat im_a = res_incident_matrice(res_a);
+  SqMat im_b = res_incident_matrice(res_b);
+  SqMat order_a = sqmat_add(im_a, im_b);
+  sqmat_free(im_a);
+  sqmat_free(im_b);
+  if (order_a == NULL) die("The partial order matrice is NULL in res_crossover_order\n");
+  SqMat order_b = sqmat_copy(order_a);
+
+  Ressource * ret = calloc(2, sizeof(Ressource));
+  if (ret == NULL) die("Unable to allocation the result array in res_crossover_order\n");
+  ushort size = res_a->max_pos;
+  ret[0] = res_create_from_partial_order(order_a, size);
+  sqmat_free(order_a);
+  ret[1] = res_create_from_partial_order(order_b, size);
+  sqmat_free(order_b);
+
+  return ret;
 }
 
 void res_output(Ressource res, FILE* stream) {

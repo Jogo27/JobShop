@@ -21,25 +21,13 @@ extern Plan sch_greedy(Prob prob);
 
 struct genetic_data {
   Population youngs;
-  int mutations_left;
-
-  int best_duration;
-  ushort current;
-
-  // Stats
-  unsigned int stat_generations;
-  unsigned int stat_mutations;
-  unsigned int stat_crossovers;
+  int * operations_left;
 };
 
 void genetic_aux(Plan plan, void * vdata) {
   struct genetic_data * data = (struct genetic_data *)vdata;
-  data->stat_mutations += 1;
-  if (pop_insert(data->youngs, plan) == OK) {
-    if (plan_duration(plan) < data->best_duration)
-      debug("mutation of %d\n", data->current);
-    data->mutations_left -= 1;
-  }
+  if (pop_insert(data->youngs, plan) == OK)
+    *data->operations_left -= 1;
 }
 
 
@@ -53,10 +41,9 @@ Plan sch_genetic(Prob prob)  {
   ushort nb_res = prob_res_count(prob);
 
   struct genetic_data data;
-  data.stat_generations = 0;
-  data.stat_mutations   = 0;
-  data.stat_crossovers  = 0;
-  data.best_duration = INT_MAX;
+  int generation = 0;
+  int stat_mutations   = 0;
+  int stat_crossovers  = 0;
 
   pop_append(youngs, sch_greedy(prob));
   for (int i=0; i < POP_SIZE; i++) {
@@ -65,26 +52,22 @@ Plan sch_genetic(Prob prob)  {
   }
 
   ushort id_m;
-  for (unsigned int immobility = 0; immobility < NB_GENERATIONS; data.stat_generations++) {
-    debug("%03d %4d %4d ", data.stat_generations, pop_size(matures), pop_size(youngs));
+  int best_makespan = INT_MAX;
+  for (unsigned int immobility = 0; immobility < NB_GENERATIONS; generation++) {
+    debug("%03d %4d %4d ", generation, pop_size(matures), pop_size(youngs));
 
     if (pop_size(youngs) == 0) {
       debug("          ");
       immobility += 10;
     }
     else {
-
-      if (plan_duration(pop_get(youngs,0)) < data.best_duration)
-        immobility = 0;
-      else
-        immobility += 1;
+      immobility += 1;
       
       // Merge youngs and matures into matures
 
       id_m = 0;
       ushort id_y = 0;
-      ushort max_m = MIN(POP_SIZE / 4 + 1 , pop_size(matures));
-//      ushort max_m = MIN(1 + POP_SIZE - (immobility * POP_SIZE / NB_GENERATIONS), pop_size(matures));
+      ushort max_m = MIN(POP_SIZE / 4, pop_size(matures));
       ushort max_y = pop_size(youngs);
 
       while ( (id_y < max_y) && (pop_size(buffer) < POP_SIZE)  &&
@@ -131,41 +114,44 @@ Plan sch_genetic(Prob prob)  {
     // Generate youngs from matures 
 
     ushort max_m = pop_size(matures);
-    data.best_duration = plan_duration(pop_get(matures, 0));
     int median_duration = plan_duration(pop_get(matures, max_m / 2));
 
     data.youngs = youngs;
-    data.mutations_left = immobility * POP_SIZE / NB_GENERATIONS;
-    int crossovers_left = POP_SIZE - data.mutations_left;
-    debug("%4d %4d\n", data.mutations_left, crossovers_left);
+    int mutations_left = immobility * POP_SIZE / NB_GENERATIONS;
+    int crossovers_left = POP_SIZE - mutations_left;
+    debug("%4d %4d\n", mutations_left, crossovers_left);
 
     long div;
     int proba;
-    for (id_m = 0; (id_m < max_m) && ( (data.mutations_left > 0) || (crossovers_left > 0) ); id_m++) {
+    for (id_m = 0; (id_m < max_m) && ( (mutations_left > 0) || (crossovers_left > 0) ); id_m++) {
       Plan plan_m = pop_get(matures, id_m);
       int duration_m = plan_duration(plan_m);
 
-      data.current = id_m;
-//      printf("  %4d %4d %4d ", data.mutations_left, crossovers_left, duration_m);
-
       // Mutations
-      if (data.mutations_left > 0) {
+      if (mutations_left > 0) {
         div = (max_m - id_m) * 7 * nb_job * duration_m;
-        if (9 * data.mutations_left * median_duration >= div)
+        if (9 * mutations_left * median_duration >= div)
           proba = RAND_MAX;
         else
-          proba = (RAND_MAX / (int)(div / median_duration)) * 9 * data.mutations_left ;
+          proba = (RAND_MAX / (int)(div / median_duration)) * 9 * mutations_left ;
 //        printf("  m %14ld %10d ", div, proba);
         int dice = rand();
         if (dice <= proba) {
+          stat_mutations += 1;
+          data.operations_left = &mutations_left;
           if ( dice < (proba * (nb_res - 8)) / (8 * (nb_res - 1)) ) {
-//            if (dice < proba / 8)
-//              plan_neighbourhood(plan_m, prob, &genetic_aux, (void *)&data);
-//            else
               plan_neighbourhood_worse(plan_m, prob, &genetic_aux, (void *)&data);
           }
           else
             plan_neighbourhood_one(plan_m, (ushort)(rand() % prob_res_count(prob)), prob, &genetic_aux, (void *)&data);
+        }
+        if (pop_size(youngs)) {
+          int makespan_y = plan_duration(pop_get(youngs,0));
+          if (makespan_y < best_makespan) {
+            debug("Mutation %d\n", id_m);
+            best_makespan = makespan_y;
+            immobility = 0;
+          }
         }
       }
 //      else
@@ -182,22 +168,24 @@ Plan sch_genetic(Prob prob)  {
         for (int i = id_m + 1; i < max_m; i++) {
           int dice = rand();
           if (dice <= proba) {
-            data.stat_crossovers += 1;
+            stat_crossovers += 1;
             Plan plan_y;
             if (dice < proba / 2) {
-              plan_y = plan_merge_task(plan_m, pop_get(matures,i), prob);
-              if (pop_insert(youngs, plan_y) == OK) {
-                if (plan_duration(plan_y) < data.best_duration)
-                  debug("crossover task of %d and %d\n", id_m, i);
+              plan_y = plan_merge_res(plan_m, pop_get(matures,i), prob);
+              if (pop_insert(youngs, plan_y) == OK)
                 crossovers_left -= 1;
-              }
             }
             else {
-              plan_y = plan_merge_res(plan_m, pop_get(matures,i), prob);
-              if (pop_insert(youngs, plan_y) == OK) {
-                if (plan_duration(plan_y) < data.best_duration)
-                  debug("crossover res of %d and %d\n", id_m, i);
-                crossovers_left -= 1;
+              data.operations_left = &crossovers_left;
+              plan_crossover_task_order(plan_m, pop_get(matures,i), prob, &genetic_aux, (void *)&data);
+//              }
+            }
+            if (pop_size(youngs)) {
+              int makespan_y = plan_duration(pop_get(youngs,0));
+              if (makespan_y < best_makespan) {
+                debug("Crossover %d %d\n", id_m, i);
+                best_makespan = makespan_y;
+                immobility = 0;
               }
             }
           }
@@ -216,6 +204,6 @@ Plan sch_genetic(Prob prob)  {
   pop_free(matures);
   pop_free(youngs);
   info("%7d mutations %7d crossovers",
-      data.stat_mutations, data.stat_crossovers);
+      stat_mutations, stat_crossovers);
   return ret;
 }

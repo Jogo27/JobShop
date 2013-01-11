@@ -19,7 +19,7 @@ void local_aux(Plan plan, void * data) {
   if (*((Plan *)data) == NULL) {
     *((Plan *)data) = plan;
   }
-  else if (plan_duration(plan) < plan_duration(*((Plan *)data))) {
+  else if (plan_sum_makespan(plan) < plan_sum_makespan(*((Plan *)data))) {
     plan_free(*((Plan *)data));
     *((Plan *)data) = (void*)plan;
   }

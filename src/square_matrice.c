@@ -23,6 +23,8 @@ typedef struct sq_mat * SqMat;
 
 static SqMat sqmat_create(ushort size);
 
+static SqMat sqmat_copy(SqMat sm);
+
 static result sqmat_free(SqMat sm);
 
 static inline schar sqmat_get(SqMat sm, ushort x, ushort y);
@@ -51,6 +53,14 @@ SqMat sqmat_create(ushort size) {
   return sm;
 }
 
+SqMat sqmat_copy(SqMat sm) {
+  if (sm == NULL) return NULL;
+
+  SqMat ret = sqmat_create(sm->size);
+  memcpy(ret->tab, sm->tab, sm->size * sm->size * sizeof(schar));
+
+  return ret;
+}
 
 result sqmat_free(SqMat sm) {
   if (sm == NULL) return FAIL;
