@@ -52,7 +52,7 @@ Plan sch_genetic(Prob prob)  {
   }
 
   ushort id_m;
-  int best_makespan = INT_MAX;
+  int best_makespan = plan_duration(pop_get(youngs,0));
   for (unsigned int immobility = 0; immobility < NB_GENERATIONS; generation++) {
     debug("%03d %4d %4d ", generation, pop_size(matures), pop_size(youngs));
 
@@ -68,6 +68,7 @@ Plan sch_genetic(Prob prob)  {
       id_m = 0;
       ushort id_y = 0;
       ushort max_m = MIN(POP_SIZE / 4, pop_size(matures));
+//      ushort max_m = MIN(1, pop_size(matures));
       ushort max_y = pop_size(youngs);
 
       while ( (id_y < max_y) && (pop_size(buffer) < POP_SIZE)  &&
@@ -148,7 +149,7 @@ Plan sch_genetic(Prob prob)  {
         if (pop_size(youngs)) {
           int makespan_y = plan_duration(pop_get(youngs,0));
           if (makespan_y < best_makespan) {
-            debug("Mutation %d\n", id_m);
+            debug("Mutation %d (%d)\n", id_m,makespan_y);
             best_makespan = makespan_y;
             immobility = 0;
           }
@@ -169,21 +170,15 @@ Plan sch_genetic(Prob prob)  {
           int dice = rand();
           if (dice <= proba) {
             stat_crossovers += 1;
-            Plan plan_y;
-            if (dice < proba / 2) {
-              plan_y = plan_merge_res(plan_m, pop_get(matures,i), prob);
-              if (pop_insert(youngs, plan_y) == OK)
-                crossovers_left -= 1;
-            }
-            else {
-              data.operations_left = &crossovers_left;
+            data.operations_left = &crossovers_left;
+            if (dice < proba / 2)
+              plan_crossover_task_onepoint(plan_m, pop_get(matures,i), prob, &genetic_aux, (void *)&data);
+            else
               plan_crossover_task_order(plan_m, pop_get(matures,i), prob, &genetic_aux, (void *)&data);
-//              }
-            }
             if (pop_size(youngs)) {
               int makespan_y = plan_duration(pop_get(youngs,0));
               if (makespan_y < best_makespan) {
-                debug("Crossover %d %d\n", id_m, i);
+                debug("Crossover %d %d (%d)\n", id_m, i,makespan_y);
                 best_makespan = makespan_y;
                 immobility = 0;
               }

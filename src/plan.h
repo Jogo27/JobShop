@@ -60,10 +60,10 @@ extern Plan plan_merge_res (Plan plan_a, Plan plan_b, Prob prob);
 extern void plan_crossover_task (Plan plan_a, Plan plan_b, Prob prob,
                         Ressource * (*res_crossover)(Ressource,Ressource), process_new_plan function, void * function_data);
 
-//inline void plan_crossover_task_onepoint (Plan plan_a, Plan plan_b, Prob prob,
-//                        process_new_plan function, void * function_data) {
-//  plan_crossover_task(plan_a, plan_b, prob, &res_crossover_onepoint, function, function_data);
-//}
+static inline void plan_crossover_task_onepoint (Plan plan_a, Plan plan_b, Prob prob,
+                        process_new_plan function, void * function_data) {
+  plan_crossover_task(plan_a, plan_b, prob, &res_crossover_onepoint, function, function_data);
+}
 
 static inline void plan_crossover_task_order (Plan plan_a, Plan plan_b, Prob prob,
                         process_new_plan function, void * function_data) {

@@ -8,6 +8,7 @@
 
 #include "ressource.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -190,6 +191,61 @@ int res_move(Ressource res, ushort a, ushort b) {
   memcpy(&res->tasks[b], &buffer, sizeof(Task));
   
   return OK;
+}
+
+#define TASK_INVALID USHRT_MAX
+
+Ressource * res_crossover_onepoint (Ressource res_a, Ressource res_b) {
+  res_verify(res_a);
+  res_verify(res_b);
+  if (res_a->max_pos != res_b->max_pos) die("Not matching ressources for res_crossover_onepoint\n");
+
+  Ressource * ret = calloc(2, sizeof(Ressource));
+  if (ret == NULL) die("Unable to allocation the result array in res_crossover_onepoint\n");
+
+  ushort size = res_a->max_pos;
+  ushort quarter_size = size / 4;
+  ushort pivot = quarter_size + rand() % (size - 2 * quarter_size);
+
+  // left to right child
+  ret[0] = res_copy(res_a);
+  for (int i=0; i < size; i++) {
+    ushort in_b = pivot;
+    while ((res_a->tasks[i].job != res_b->tasks[in_b].job) && (in_b < size)) in_b += 1;
+
+    if (in_b < size)
+      ret[0]->tasks[i].job = TASK_INVALID;
+    else {
+      int j = i;
+      while ((j > 0) && (ret[0]->tasks[j-1].job == TASK_INVALID)) j -= 1;
+      if (i != j) {
+        memcpy(&ret[0]->tasks[j], &ret[0]->tasks[i], sizeof(Task));
+        ret[0]->tasks[i].job = TASK_INVALID;
+      }
+    }
+  }
+  memcpy(&ret[0]->tasks[pivot], &res_b->tasks[pivot], (size - pivot) * sizeof(Task));
+
+  // right to left child
+  ret[1] = res_copy(res_b);
+  for (int i=size-1; i >= 0; i--) {
+    ushort in_a = 0;
+    while ((res_b->tasks[i].job != res_a->tasks[in_a].job) && (in_a < pivot)) in_a += 1;
+
+    if (in_a < pivot)
+      ret[1]->tasks[i].job = TASK_INVALID;
+    else {
+      int j = i;
+      while ((j + 1 < size) && (ret[1]->tasks[j+1].job == TASK_INVALID)) j += 1;
+      if (i != j) {
+        memcpy(&ret[1]->tasks[j], &ret[1]->tasks[i], sizeof(Task));
+        ret[1]->tasks[i].job = TASK_INVALID;
+      }
+    }
+  }
+  memcpy(&ret[1]->tasks[0], &res_a->tasks[0], pivot * sizeof(Task));
+
+  return ret;
 }
 
 // For efficiency, sqmat_get and sqmat_set need to be static.
