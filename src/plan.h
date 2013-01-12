@@ -51,10 +51,10 @@ extern Ressource plan_get_ressource (Plan plan, ushort res_id);
 extern result plan_schedule (Plan plan, Prob prob, ushort job_id);
 
 // Cmax: the makespan of the complete plan
-extern int plan_duration (Plan plan);
+extern ushort plan_makespan (Plan plan);
 
 // The sum of the makespans of every ressource in the plan
-extern int plan_sum_makespan (Plan plan);
+extern ushort plan_sum_makespan (Plan plan);
 
 // Output the plan, one line per ressource
 extern void plan_output (Plan plan, FILE * stream);

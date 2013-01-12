@@ -84,15 +84,15 @@ result pop_insert(Population pop, Plan plan) {
 
   if (pop->size == 0) return pop_append(pop, plan);
 
-  int duration = plan_duration(plan);
-  int duration_m;
+  ushort makespan = plan_makespan(plan);
+  ushort makespan_m;
 
   ushort b = 0;
-  duration_m = plan_duration(pop->plans[0]);
-  if (duration  <  duration_m) {
+  makespan_m = plan_makespan(pop->plans[0]);
+  if (makespan  <  makespan_m) {
     return pop_insert_at(pop, plan, 0);
   }
-  if (duration == duration_m) {
+  if (makespan == makespan_m) {
     if (plan_equals(plan, pop->plans[0])) {
       plan_free(plan);
       return FAIL;
@@ -102,11 +102,11 @@ result pop_insert(Population pop, Plan plan) {
   }
 
   ushort e = pop->size - 1;
-  duration_m = plan_duration(pop->plans[e]);
-  if (duration  >  duration_m) {
+  makespan_m = plan_makespan(pop->plans[e]);
+  if (makespan  >  makespan_m) {
     return pop_append(pop, plan);
   }
-  if (duration == duration_m) {
+  if (makespan == makespan_m) {
     if (plan_equals(plan, pop->plans[e])) {
       plan_free(plan);
       return FAIL;
@@ -118,11 +118,11 @@ result pop_insert(Population pop, Plan plan) {
 
   while ((e - b) > 1) {
     ushort m = (e + b) / 2;
-    duration_m = plan_duration(pop->plans[m]);
-    if (duration_m < duration) {
+    makespan_m = plan_makespan(pop->plans[m]);
+    if (makespan_m < makespan) {
       b = m;
     }
-    else if (duration_m > duration) {
+    else if (makespan_m > makespan) {
       e = m;
     }
     else if (plan_equals(plan, pop->plans[m])) {

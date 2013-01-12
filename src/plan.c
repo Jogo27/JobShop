@@ -86,20 +86,20 @@ int plan_equals(Plan plan_a, Plan plan_b) {
   return 1;
 }
 
-int plan_duration(Plan plan) {
+ushort plan_makespan(Plan plan) {
   if (plan == NULL) die("NULL plan");
-  int duration = 0;
+  ushort makespan = 0;
   for (int i=0; i < plan->nb_res; i++)
-    duration = MAX(duration, res_duration(plan->res[i]));
-  return duration;
+    makespan = MAX(makespan, res_makespan(plan->res[i]));
+  return makespan;
 }
 
-int plan_sum_makespan(Plan plan) {
+ushort plan_sum_makespan(Plan plan) {
   if (plan == NULL) die("NULL plan");
-  int first  = 0;
-  int second = 0;
+  ushort first  = 0;
+  ushort second = 0;
   for (int i=0; i < plan->nb_res; i++) {
-    int makespan = res_duration(plan->res[i]);
+    ushort makespan = res_makespan(plan->res[i]);
     if (makespan > first) {
       second = first;
       first  = makespan;
@@ -119,7 +119,7 @@ result plan_schedule(Plan plan, Prob prob, ushort job_id) {
 
   Ressource res = plan->res[res_id];
   if (res_add_task(res, job, job_id) == FAIL) return FAIL;
-  if (job_next_op(job, res_duration(res)) == FAIL) return FAIL;
+  if (job_next_op(job, res_makespan(res)) == FAIL) return FAIL;
 
   return OK;
 }
@@ -137,7 +137,6 @@ static Plan plan_replay(Plan plan, Prob prob) {
 
   Plan ret = plan_create(prob);
   ushort res_id = 0;
-//  ushort guard = 0; // used to prevent infinite loop in case where the plan is invalid
   prob_unschedule(prob);
   while (!prob_is_scheduled(prob)) {
     ushort task_id  = res_max_task_id(ret->res[res_id]);
@@ -146,7 +145,6 @@ static Plan plan_replay(Plan plan, Prob prob) {
     while (task_id < task_max) {
       ushort job_id = res_task_job(plan->res[res_id], task_id);
       if (job_curop_res(prob_get_job(prob, job_id)) == res_id) {
-//        guard = 0;
         plan_schedule(ret, prob, job_id);
         task_id += 1;
       }
@@ -154,13 +152,6 @@ static Plan plan_replay(Plan plan, Prob prob) {
         task_id = task_max;
       }
     }
-
-    // Prevent infinite loop
-//    guard += 1;
-//    if (guard >= plan->nb_res) {
-//      plan_free(ret);
-//      return NULL;
-//    }
 
     res_id = (res_id + 1) % plan->nb_res;
   }
@@ -260,7 +251,7 @@ plan_neighbourhood_perm(Plan plan, ushort res_id, Prob prob, void (*function)(Pl
   Ressource res = plan->res[res_id];
 
   for (int i = 0; i + 1 < res_max_task_id(plan->res[res_id]); i++) {
-    int termination = res_task_start(res, i) + res_task_duration(res, i);
+    ushort termination = res_task_start(res, i) + res_task_duration(res, i);
     for (int j = i + 1; j < res_max_task_id(plan->res[res_id]); j++) {
       if (res_task_jobstart(res, j) < termination) {
         Plan nplan = plan_replay_move(plan, prob, res_id, j, i);
@@ -274,9 +265,9 @@ void
 plan_neighbourhood_worse(Plan plan, Prob prob, void (*function)(Plan,void *), void * function_data) {
   if ((plan == NULL) || (prob == NULL) || (function == NULL)) die("NULL argument to plan_neighbourhood\n");
 
-  int duration = plan_duration(plan);
+  ushort makespan = plan_makespan(plan);
   for (int res_id = 0; res_id < plan->nb_res; res_id++)
-    if (duration == res_duration(plan->res[res_id]))
+    if (makespan == res_makespan(plan->res[res_id]))
       plan_neighbourhood_one(plan, res_id, prob, function, function_data);
 }
 
@@ -291,9 +282,9 @@ plan_neighbourhood(Plan plan, Prob prob, void (*function)(Plan,void *), void * f
 Plan plan_reduce_critical_path(Plan plan, Prob prob) {
   if ((plan == NULL) || (prob == NULL)) die("NULL argument to plan_reduce_critical_path\n");
 
-  int duration = plan_duration(plan);
+  ushort makespan = plan_makespan(plan);
   ushort res_id = 0;
-  while (res_duration(plan->res[res_id]) < duration) res_id += 1;
+  while (res_makespan(plan->res[res_id]) < makespan) res_id += 1;
   debug("res %d ", res_id);
 
   // Search for inactivity of the critical ressource
@@ -301,8 +292,6 @@ Plan plan_reduce_critical_path(Plan plan, Prob prob) {
   ushort task_id = res_max_task_id(plan->res[res_id]) - 1;
   while ((task_id > 0) &&
          (res_task_jobstart(res, task_id) <= res_task_start(res, task_id - 1) + res_task_duration(res, task_id - 1))) {
-//    if (res_task_jobstart(res, task_id) < res_task_start(res, task_id - 1))
-//      return plan_replay_move(plan, prob, res_id, task_id, task_id - 1);
     task_id -= 1;
   }
   debug("task %d ", task_id);
@@ -316,7 +305,7 @@ Plan plan_reduce_critical_path(Plan plan, Prob prob) {
   debug("job %d op %d ", job_id, op_id);
   
   // Search a permutation
-  int jobstart;
+  ushort jobstart;
   do {
     if (op_id == 0)
       return NULL;
@@ -336,35 +325,10 @@ Plan plan_reduce_critical_path(Plan plan, Prob prob) {
   return plan_replay_move(plan, prob, res_id, task_id, move_to);
 }
 
-Plan plan_merge_res(Plan plan_a, Plan plan_b, Prob prob) {
-  /* Genes are ressources. If the ressource is the last to be released in its parent, the other one is choosen.
-   * Othewise, it's random. */
-  if ((plan_a == NULL) || (plan_b == NULL)) die("NULL plan for plan_merge\n");
-  if ((plan_a->nb_res != plan_b->nb_res) || (plan_a->nb_res != prob_res_count(prob))) die("Plans' size doesn't match in plan_merge\n");
-
-  Plan draft = plan_create_empty(plan_a->nb_res);
-  if (draft == NULL) return NULL;
-
-  int makespan_a = plan_duration(plan_a);
-  int makespan_b = plan_duration(plan_b);
-  for (int i=0; i < plan_a->nb_res; i++) {
-    if ((res_duration(plan_a->res[i]) == makespan_a) && (res_duration(plan_b->res[i]) != makespan_b))
-        draft->res[i] = res_clone(plan_b->res[i]);
-    else if ((res_duration(plan_b->res[i]) == makespan_b) && (res_duration(plan_a->res[i]) != makespan_a))
-        draft->res[i] = res_clone(plan_a->res[i]);
-    else
-      draft->res[i] = res_clone(((rand() & 1) ? plan_a : plan_b)->res[i]);
-  }
-
-  Plan ret = plan_repair(draft, prob);
-  plan_free(draft);
-  return ret;
-}
-
 void plan_crossover_task (Plan plan_a, Plan plan_b, Prob prob,
             Ressource * (*res_crossover)(Ressource,Ressource), process_new_plan function, void * function_data) {
-  if ((plan_a == NULL) || (plan_b == NULL)) die("NULL plan for plan_merge\n");
-  if ((plan_a->nb_res != plan_b->nb_res) || (plan_a->nb_res != prob_res_count(prob))) die("Plans' size doesn't match in plan_merge\n");
+  if ((plan_a == NULL) || (plan_b == NULL)) die("NULL plan for plan_crossover_task\n");
+  if ((plan_a->nb_res != plan_b->nb_res) || (plan_a->nb_res != prob_res_count(prob))) die("Plans' size doesn't match in plan_crossover_task\n");
 
   Plan draft_a = plan_create_empty(plan_a->nb_res);
   if (draft_a == NULL) return;

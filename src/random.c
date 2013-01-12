@@ -13,7 +13,6 @@
 #include "plan.h"
 
 Plan sch_random(Prob prob) {
-//  srand((unsigned int)(prob));
 
   ushort nb_jobs = prob_job_count(prob);
 

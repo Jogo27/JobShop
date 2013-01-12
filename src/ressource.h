@@ -51,13 +51,13 @@ extern int res_equals (Ressource res_a, Ressource res_b);
 extern result res_add_task (Ressource res, Job job, ushort job_id);
 
 // Low level version of res_add_task (use with care)
-extern result res_add_task_low (Ressource res, ushort job_id, int min_start, int duration);
+extern result res_add_task_low (Ressource res, ushort job_id, ushort min_start, ushort duration);
 
 // Move task a at position b
-extern int res_move (Ressource res, ushort task_a_id, ushort task_b_id);
+extern result res_move (Ressource res, ushort task_a_id, ushort task_b_id);
 
 // Next free moment
-extern int    res_duration (Ressource res);
+extern ushort res_makespan (Ressource res);
 
 // Output the sequence of job identifier separated by spaces
 extern void res_output (Ressource res, FILE* stream);

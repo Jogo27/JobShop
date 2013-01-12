@@ -55,7 +55,7 @@ result prob_free(Prob prob) {
 }
 
 
-Job prob_get_job(Prob prob, int i) {
+Job prob_get_job(Prob prob, ushort i) {
   if ((prob == NULL) || (i < 0) || (i >= prob->nb_jobs)) return NULL;
   return prob->jobs[i];
 }

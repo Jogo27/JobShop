@@ -17,15 +17,15 @@
 typedef struct {
   ushort job;
   ushort duration;
-  int    start;
-  int    jobstart;
+  ushort start;
+  ushort jobstart;
 } Task;
 
 struct ressource {
   ushort nb_refs;
   ushort max_pos;
   ushort size;
-  int    duration;
+  ushort makespan;
   Task * tasks;
 };
 
@@ -37,7 +37,7 @@ Ressource res_create(ushort initial_size) {
   res->nb_refs = 1;
   res->max_pos = 0;
   res->size = initial_size;
-  res->duration = 0;
+  res->makespan = 0;
 
   res->tasks = calloc(res->size, sizeof(Task));
   if (res->tasks == NULL) {
@@ -57,7 +57,7 @@ Ressource res_copy(Ressource from) {
   res->nb_refs  = 1;
   res->max_pos  = from->max_pos;
   res->size     = from->max_pos;
-  res->duration = from->duration;
+  res->makespan = from->makespan;
 
   res->tasks = calloc(res->size, sizeof(Task));
   if (res->tasks == NULL) {
@@ -100,7 +100,7 @@ result res_free(Ressource res) {
 int res_equals(Ressource res_a, Ressource res_b) {
   if (res_a == res_b) return 1;
   if ( (res_a == NULL) || (res_b == NULL)   ||
-       (res_a->duration != res_b->duration) ||
+       (res_a->makespan != res_b->makespan) ||
        (res_a->max_pos  != res_b->max_pos)
      ) return 0;
 
@@ -115,7 +115,7 @@ void res_verify(Ressource res) {
   if (res->nb_refs < 1) die("Invalid ressource");
 }
 
-result res_add_task_low(Ressource res, ushort job_id, int min_start, int duration) {
+result res_add_task_low(Ressource res, ushort job_id, ushort min_start, ushort duration) {
   res_verify(res);
 
   size_t length = res->size;
@@ -130,14 +130,14 @@ result res_add_task_low(Ressource res, ushort job_id, int min_start, int duratio
     res->tasks = new_tasks;
   }
 
-  int start = MAX(res->duration, min_start);
+  ushort start = MAX(res->makespan, min_start);
   res->tasks[res->max_pos].job      = job_id;
   res->tasks[res->max_pos].start    = start;
   res->tasks[res->max_pos].jobstart = min_start;
   res->tasks[res->max_pos].duration = duration;
 
   res->max_pos += 1;
-  res->duration = start + duration;
+  res->makespan = start + duration;
 
   return OK;
 }
@@ -146,8 +146,8 @@ result res_add_task(Ressource res, Job job, ushort job_id) {
   res_verify(res);
   if (job == NULL) die("NULL job in res_add_task\n");
 
-  int min_start = job_curop_minstart(job);
-  int duration  = job_curop_duration(job);
+  ushort min_start = job_curop_minstart(job);
+  ushort duration  = job_curop_duration(job);
   return res_add_task_low(res, job_id, min_start, duration);
 }
 
@@ -156,9 +156,9 @@ ushort res_max_task_id(Ressource res) {
   return res->max_pos;
 }
 
-int res_duration(Ressource res) {
+ushort res_makespan(Ressource res) {
   res_verify(res);
-  return res->duration;
+  return res->makespan;
 }
 
 ushort res_task_job(Ressource res, ushort task_id) {
@@ -185,7 +185,7 @@ ushort res_task_jobstart(Ressource res, ushort task_id) {
   return res->tasks[task_id].jobstart;
 }
 
-int res_move(Ressource res, ushort a, ushort b) {
+result res_move(Ressource res, ushort a, ushort b) {
   if ((res == NULL) || (res->nb_refs != 1) ||
       (a >= res->max_pos) || (b >= res->max_pos) ) return FAIL;
   if (a == b) return OK;

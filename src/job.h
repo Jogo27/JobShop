@@ -48,13 +48,14 @@ extern result job_unschedule (Job job);
 extern int job_is_scheduled (Job job);
 
 // Mark the current operation as sheduled and set the minimum starting time of the next operation
-extern result job_next_op (Job job, int next_minstart);
+extern result job_next_op (Job job, ushort next_minstart);
 
 // The index of the next operation to schedule
 extern ushort job_curop_position (Job job);
 
-// The minimum starting time of the next operation to schedule (depends only on job's previous operation duration)
-extern int job_curop_minstart (Job job);
+// The minimum starting time of the next operation to schedule (depends only on job's previous
+// operation duration)
+extern ushort job_curop_minstart (Job job);
 
 // The ressource id of the next operation to schedule
 extern ushort job_curop_res (Job job);
@@ -63,6 +64,6 @@ extern ushort job_curop_res (Job job);
 extern ushort job_curop_duration (Job job);
 
 // Sum of the duration of unscheduled operations
-extern int job_remaining_duration (Job job);
+extern ushort job_remaining_duration (Job job);
 
 #endif

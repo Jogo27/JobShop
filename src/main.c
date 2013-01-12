@@ -131,7 +131,7 @@ int main(int argc, char ** argv) {
       clock_t c = clock();
       plan = (*algo)(prob);
       duration += clock() - c;
-      makespan += plan_duration(plan);
+      makespan += plan_makespan(plan);
     }
     printf(" makespan %4.2f duration %.2f s\n",
         (double)makespan / (double) repetitions,

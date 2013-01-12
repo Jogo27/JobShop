@@ -20,7 +20,7 @@ struct job {
   ushort cur_pos;
   ushort max_pos;
   size_t size;
-  int start;
+  ushort start;
   Op * op;
 };
 
@@ -69,7 +69,7 @@ ushort job_curop_position(Job job) {
   return job->cur_pos;
 }
 
-int job_curop_minstart(Job job) {
+ushort job_curop_minstart(Job job) {
   if (job == NULL) die("NULL pointer for job_curop_start\n");
   return job->start;
 }
@@ -92,10 +92,10 @@ ushort job_curop_duration(Job job) {
   return job->op[job->cur_pos].duration;
 }
 
-int job_remaining_duration(Job job) {
+ushort job_remaining_duration(Job job) {
   if (job == NULL) die("NULL pointer for job_remaining_duration\n");
 
-  int duration = 0;
+  ushort duration = 0;
   for (int i=job->cur_pos; i < job->max_pos; i++) duration += job->op[i].duration;
   return duration;
 }
@@ -107,11 +107,11 @@ result job_unschedule(Job job) {
   return OK;
 }
 
-result job_next_op(Job job, int next_minstart) {
+result job_next_op(Job job, ushort next_minstart) {
   if (job == NULL) return FAIL;
 
   if (job->cur_pos < job->max_pos) {
-    int job_minstart = job->start + job->op[job->cur_pos].duration;
+    ushort job_minstart = job->start + job->op[job->cur_pos].duration;
     job->cur_pos += 1;
     job->start = MAX(next_minstart, job_minstart);
     return OK;

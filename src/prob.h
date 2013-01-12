@@ -38,7 +38,7 @@ extern ushort prob_job_count (Prob prob);
 extern ushort prob_res_count (Prob prob);
 
 // Retrieve a given job
-extern Job prob_get_job (Prob prob, int i);
+extern Job prob_get_job (Prob prob, ushort i);
 
 
 
