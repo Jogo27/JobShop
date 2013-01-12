@@ -158,8 +158,6 @@ static Plan plan_replay(Plan plan, Prob prob) {
     // Prevent infinite loop
     guard += 1;
     if (guard >= plan->nb_res) {
-//      plan_output(plan, stdout);
-//      plan_output(ret, stdout);
       plan_free(ret);
       return NULL;
     }
@@ -167,6 +165,55 @@ static Plan plan_replay(Plan plan, Prob prob) {
     res_id = (res_id + 1) % plan->nb_res;
   }
 
+  return ret;
+}
+
+static Plan plan_repair(Plan plan_arg, Prob prob) {
+  if ((plan_arg == NULL) || (prob == NULL)) die("NULL argument to plan_repair\n");
+
+  Plan plan = plan_clone(plan_arg);
+  Plan ret  = plan_create(prob);
+  prob_unschedule(prob);
+
+  ushort res_id = 0;
+  ushort guard = 0;
+  ushort forward = 0;
+  char cont = 1;
+  while (cont) {
+
+    while (cont && (guard < plan->nb_res)) {
+
+      ushort task_id  = res_max_task_id(ret->res[res_id]);
+      ushort task_max = res_max_task_id(plan->res[res_id]);
+
+      while (task_id + forward < task_max) {
+        ushort job_id = res_task_job(plan->res[res_id], task_id + forward);
+        if (job_curop_res(prob_get_job(prob, job_id)) == res_id) {
+          plan_schedule(ret, prob, job_id);
+          guard = 0;
+          if (forward) {
+            res_prepare_for_write(&plan->res[res_id]);
+            res_move(plan->res[res_id], task_id + forward, task_id);
+            forward = 0;
+          }
+          cont = !prob_is_scheduled(prob);
+          task_id += 1;
+        }
+        else {
+          task_id = task_max;
+        }
+      }
+
+      guard += 1;
+      res_id = (res_id + 1) % plan->nb_res;
+    } // while guard
+
+    forward += 1;
+    guard = 0;
+
+  } // while not scheduled
+
+  plan_free(plan);
   return ret;
 }
 
@@ -309,7 +356,7 @@ Plan plan_merge_res(Plan plan_a, Plan plan_b, Prob prob) {
       draft->res[i] = res_clone(((rand() & 1) ? plan_a : plan_b)->res[i]);
   }
 
-  Plan ret = plan_replay(draft, prob);
+  Plan ret = plan_repair(draft, prob);
   plan_free(draft);
   return ret;
 }
@@ -338,8 +385,8 @@ void plan_crossover_task (Plan plan_a, Plan plan_b, Prob prob,
     }
   }
 
-  (*function)(plan_replay(draft_a, prob), function_data);
-  (*function)(plan_replay(draft_b, prob), function_data);
+  (*function)(plan_repair(draft_a, prob), function_data);
+  (*function)(plan_repair(draft_b, prob), function_data);
   plan_free(draft_a);
   plan_free(draft_b);
 }

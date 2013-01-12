@@ -76,8 +76,17 @@ Ressource res_clone(Ressource res) {
   return res;
 }
 
+void res_prepare_for_write(Ressource * res) {
+  if (*res == NULL) return;
+  if ((*res)->nb_refs < 2) return;
+
+  Ressource buffer = *res;
+  *res = res_copy(buffer);
+  res_free(buffer);
+}
+
 result res_free(Ressource res) {
-  if ((res == NULL) || (res->nb_refs == 0)) die("oups");
+  if ((res == NULL) || (res->nb_refs == 0)) die("Deleting invalid ressource\n");
 
   res->nb_refs -= 1;
   if (res->nb_refs == 0) {

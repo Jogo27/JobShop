@@ -26,6 +26,9 @@ extern Ressource res_copy(Ressource res);
 // Soft copy
 extern Ressource res_clone(Ressource res);
 
+// Eventualy turn a soft copy to a hard one
+extern void res_prepare_for_write(Ressource * res);
+
 extern result res_free(Ressource res);
 
 extern int res_equals(Ressource res_a, Ressource res_b);

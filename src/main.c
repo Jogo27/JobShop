@@ -54,9 +54,10 @@ extern Plan sch_localy(Prob prob);
 extern Plan sch_local_opt(Prob prob);
 extern Plan sch_tabou(Prob prob);
 extern Plan sch_genetic(Prob prob);
+extern Plan sch_pgenetic(Prob prob);
 
 void print_help(FILE * stream, char * prog) {
-  fprintf(stream, "Usage: %s [-d] [-n <repetitions>] [-r|-g|-l|-t|-G] <file>\n", prog);
+  fprintf(stream, "Usage: %s [-d] [-n <repetitions>] [-r|-g|-l|-t|-G|-p] <file>\n", prog);
   exit(1);
 }
 
@@ -84,6 +85,9 @@ int main(int argc, char ** argv) {
         break;
       case 'G':
         algo = &sch_genetic;
+        break;
+      case 'p':
+        algo = &sch_pgenetic;
         break;
       case 'd':
         debug_mode = 1;

@@ -26,7 +26,7 @@ struct genetic_aux {
   unsigned int stat_crossovers;
 };
 
-void genetic_aux(Plan plan, void * vdata) {
+static void genetic_aux(Plan plan, void * vdata) {
   struct genetic_aux * data = (struct genetic_aux *)vdata;
   if ( (data->max_duration < 0) ||
        (plan_duration(plan) <= data->max_duration)
@@ -46,11 +46,11 @@ void grew(Plan mature, Population olds, Prob prob, struct genetic_aux * data) {
 
   if (max > 0) max -= 1;
   for (int i=0; i < max; i++)
-    if (pop_insert(data->youngs, plan_merge(mature, pop_get(olds,i), prob)) == OK)
+    if (pop_insert(data->youngs, plan_merge_res(mature, pop_get(olds,i), prob)) == OK)
       data->stat_crossovers += 1;
 }
 
-Plan sch_genetic(Prob prob)  {
+Plan sch_pgenetic(Prob prob)  {
 
   Population youngs  = pop_create();
   Population matures = pop_create();
