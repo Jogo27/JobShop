@@ -21,26 +21,32 @@ extern Plan sch_greedy(Prob prob);
 
 struct genetic_data {
   Population youngs;
+  int * operations_count;
   int * operations_left;
 };
 
 void genetic_aux(Plan plan, void * vdata) {
   struct genetic_data * data = (struct genetic_data *)vdata;
+  *data->operations_count += 1;
   if (pop_insert(data->youngs, plan) == OK)
     *data->operations_left -= 1;
 }
 
-inline Plan genetic(Prob prob, char with_crossover);
+static inline Plan genetic(Prob prob, char with_crossover, void(*crossover_function)(Plan,Plan,Prob,process_new_plan,void*));
 
 Plan sch_genetic(Prob prob) {
-  return genetic(prob, 1);
+  return genetic(prob, 1, &plan_crossover_task_onepoint);
+}
+
+Plan sch_order(Prob prob) {
+  return genetic(prob, 1, &plan_crossover_task_order);
 }
 
 Plan sch_mutations(Prob prob) {
-  return genetic(prob, 0);
+  return genetic(prob, 0, NULL);
 }
 
-static inline Plan genetic(Prob prob, char with_crossover)  {
+static inline Plan genetic(Prob prob, char with_crossover, void(*crossover_function)(Plan,Plan,Prob,process_new_plan,void*))  {
 
   Population youngs  = pop_create();
   Population matures = pop_create();
@@ -140,8 +146,8 @@ static inline Plan genetic(Prob prob, char with_crossover)  {
           proba = (RAND_MAX / (int)(div / median_duration)) * 9 * mutations_left ;
         int dice = rand();
         if (dice <= proba) {
-          stat_mutations += 1;
-          data.operations_left = &mutations_left;
+          data.operations_count = &stat_mutations;
+          data.operations_left  = &mutations_left;
           if ( dice < (proba * (nb_res - 8)) / (8 * (nb_res - 1)) ) {
               plan_neighbourhood_worse(plan_m, prob, &genetic_aux, (void *)&data);
           }
@@ -171,12 +177,9 @@ static inline Plan genetic(Prob prob, char with_crossover)  {
         for (int i = id_m + 1; i < max_m; i++) {
           int dice = rand();
           if (dice <= proba) {
-            stat_crossovers += 1;
-            data.operations_left = &crossovers_left;
-            if (dice < proba / 2)
-              plan_crossover_task_onepoint(plan_m, pop_get(matures,i), prob, &genetic_aux, (void *)&data);
-            else
-              plan_crossover_task_order(plan_m, pop_get(matures,i), prob, &genetic_aux, (void *)&data);
+            data.operations_count = &stat_crossovers;
+            data.operations_left  = &crossovers_left;
+            (*crossover_function)(plan_m, pop_get(matures,i), prob, &genetic_aux, (void *)&data);
             if (pop_size(youngs)) {
               int makespan_y = plan_duration(pop_get(youngs,0));
               if (makespan_y < best_makespan) {
@@ -200,7 +203,7 @@ static inline Plan genetic(Prob prob, char with_crossover)  {
   for (int id_m = 1; id_m < max_m; id_m++) plan_free(pop_get(matures, id_m));
   pop_free(matures);
   pop_free(youngs);
-  info("%7d mutations %7d crossovers",
-      stat_mutations, stat_crossovers);
+  info("%7d mutations", stat_mutations);
+  if (with_crossover) info(" %7d crossovers", stat_crossovers);
   return ret;
 }

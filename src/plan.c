@@ -137,7 +137,7 @@ static Plan plan_replay(Plan plan, Prob prob) {
 
   Plan ret = plan_create(prob);
   ushort res_id = 0;
-  ushort guard = 0; // used to prevent infinite loop in case where the plan is invalid
+//  ushort guard = 0; // used to prevent infinite loop in case where the plan is invalid
   prob_unschedule(prob);
   while (!prob_is_scheduled(prob)) {
     ushort task_id  = res_max_task_id(ret->res[res_id]);
@@ -146,7 +146,7 @@ static Plan plan_replay(Plan plan, Prob prob) {
     while (task_id < task_max) {
       ushort job_id = res_task_job(plan->res[res_id], task_id);
       if (job_curop_res(prob_get_job(prob, job_id)) == res_id) {
-        guard = 0;
+//        guard = 0;
         plan_schedule(ret, prob, job_id);
         task_id += 1;
       }
@@ -156,11 +156,11 @@ static Plan plan_replay(Plan plan, Prob prob) {
     }
 
     // Prevent infinite loop
-    guard += 1;
-    if (guard >= plan->nb_res) {
-      plan_free(ret);
-      return NULL;
-    }
+//    guard += 1;
+//    if (guard >= plan->nb_res) {
+//      plan_free(ret);
+//      return NULL;
+//    }
 
     res_id = (res_id + 1) % plan->nb_res;
   }
