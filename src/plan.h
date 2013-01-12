@@ -20,59 +20,87 @@
 struct plan;
 typedef struct plan * Plan;
 
-extern Plan   plan_create(Prob prob);
-extern Plan   plan_clone(Plan plan);
-extern result plan_free(Plan plan);
+// Function handling newly created plan
+typedef void (*process_new_plan) (Plan,void*);
 
 
-extern int plan_duration(Plan plan);
 
-extern int plan_sum_makespan(Plan plan);
+/* Constructors/Destructors */
 
-extern Ressource plan_get_ressource(Plan plan, ushort res_id);
+// Allocate a brand new plan
+extern Plan   plan_create (Prob prob);
 
-extern int plan_equals(Plan plan_a, Plan plan_b);
+// Return a copy of plan in which ressources are clones of plan's ressources
+extern Plan   plan_clone (Plan plan);
 
-// Function type to provide to handle newly created plan
-typedef void (*process_new_plan)(Plan,void*);
-
-// Neighbourhood functions
-
-extern result plan_schedule(Plan plan, Prob prob, ushort job_id);
+// Desallocate
+extern result plan_free (Plan plan);
 
 
-// For each neighbour plan, call the function
-extern void plan_neighbourhood(Plan plan, Prob prob,
+
+/* Plan Getters/Setters */
+
+// Plans are equals if their ressources are equals
+extern int plan_equals (Plan plan_a, Plan plan_b);
+
+// Retrieve the given ressource
+extern Ressource plan_get_ressource (Plan plan, ushort res_id);
+
+// Add to the correct ressource a task corresponding to the "current" operation of the job job_id
+// from prob. Then update prob.
+extern result plan_schedule (Plan plan, Prob prob, ushort job_id);
+
+// Cmax: the makespan of the complete plan
+extern int plan_duration (Plan plan);
+
+// The sum of the makespans of every ressource in the plan
+extern int plan_sum_makespan (Plan plan);
+
+// Output the plan, one line per ressource
+extern void plan_output (Plan plan, FILE * stream);
+
+
+
+/* Neighbourhood functions */
+
+// All admissible adjacent transpositions of every ressources
+extern void plan_neighbourhood (Plan plan, Prob prob,
                         process_new_plan function, void * function_data);
-extern void plan_neighbourhood_one(Plan plan, ushort res_id, Prob prob,
-                        process_new_plan function, void * function_data);
-extern void plan_neighbourhood_perm(Plan plan, ushort res_id, Prob prob,
+
+// All admissible adjacent transpositions of one ressources
+extern void plan_neighbourhood_one (Plan plan, ushort res_id, Prob prob,
                         process_new_plan function, void * function_data);
 
-// Only compute neighbourhood for worse duration ressources
-extern void plan_neighbourhood_worse(Plan plan, Prob prob,
+// All admissible transpositions of every ressources
+extern void plan_neighbourhood_perm (Plan plan, ushort res_id, Prob prob,
                         process_new_plan function, void * function_data);
 
+// All admissible adjacent transpositions of the longest makespan ressources
+extern void plan_neighbourhood_worse (Plan plan, Prob prob,
+                        process_new_plan function, void * function_data);
+
+// One transposition on the critical path
 extern Plan plan_reduce_critical_path (Plan plan, Prob prob);
 
-extern Plan plan_merge_res (Plan plan_a, Plan plan_b, Prob prob);
 
+
+/* Crossover functions */
+
+// Private function
 extern void plan_crossover_task (Plan plan_a, Plan plan_b, Prob prob,
-                        Ressource * (*res_crossover)(Ressource,Ressource), process_new_plan function, void * function_data);
+                        Ressource * (*res_crossover) (Ressource,Ressource), process_new_plan function, void * function_data);
 
+// Classical one point crossover on every (non-equal) ressource
 static inline void plan_crossover_task_onepoint (Plan plan_a, Plan plan_b, Prob prob,
                         process_new_plan function, void * function_data) {
   plan_crossover_task(plan_a, plan_b, prob, &res_crossover_onepoint, function, function_data);
 }
 
+// Stochastic crossover preserving tasks' partial ordering common to both parents
 static inline void plan_crossover_task_order (Plan plan_a, Plan plan_b, Prob prob,
                         process_new_plan function, void * function_data) {
   plan_crossover_task(plan_a, plan_b, prob, &res_crossover_order, function, function_data);
 }
 
-extern Plan plan_merge_task(Plan plan_a, Plan plan_b, Prob prob);
-
-
-extern void plan_output(Plan plan, FILE * stream);
 
 #endif

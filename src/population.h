@@ -17,32 +17,46 @@
 struct population;
 typedef struct population * Population;
 
-extern Population pop_create();
+
+
+/* Constructors Destructors */
+
+// Allocate a new (empty) population
+extern Population pop_create ();
 
 // The destructor doesn't delete any plan
-extern void pop_free(Population pop);
+extern void pop_free (Population pop);
 
 
-extern ushort pop_size(Population pop);
 
-extern Plan pop_get(Population pop, ushort pos);
+/* Getters Setters */
 
+// Number of plan in the population
+extern ushort pop_size (Population pop);
 
-// Delete plan if the population is full
-extern result pop_append(Population pop, Plan plan);
-
-// Delete plans getting off the pop
-extern result pop_insert_at(Population pop, Plan plan, ushort pos);
-
-// Insert plan at its place (assume and keep the population sorted)
-// Delete plans getting out the pop
-extern result pop_insert(Population pop, Plan plan);
+// Retrieve a given plan
+extern Plan pop_get (Population pop, ushort pos);
 
 // Append to dest as much plans as possible from src starting at pos.
 // Returns the number of plans added.
-extern ushort pop_copy_append(Population dest, Population src, ushort pos);
+extern ushort pop_copy_append (Population dest, Population src, ushort pos);
 
-// Forget about the pop's plans (without deleting them)
-extern void pop_reset(Population pop);
+// Forget about the pop's plans (without desallocating them)
+extern void pop_reset (Population pop);
+
+
+/* The following setters desallocate the plan if it can't be added to the population.
+ * They desallocate any plan pushed out of the population too.
+ */
+
+// Add the plan assuming its makespan is worse than any other in the population
+extern result pop_append (Population pop, Plan plan);
+
+// Add the plan at the given position without checking its makespan
+extern result pop_insert_at (Population pop, Plan plan, ushort pos);
+
+// Add the plan at the position corresponding to its makespan (keep the population sorted)
+extern result pop_insert (Population pop, Plan plan);
+
 
 #endif // POPULATION_H
