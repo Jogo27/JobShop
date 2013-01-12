@@ -22,11 +22,11 @@ L'heuristique implémentée est de type «~Earliest Due Date~» (EDD).
 
 Pour chaque job et chaque ressource, on maintient la date minimale de début de la prochaine
 opération : $sj_j$ pour chaque job $j$ et $sr_k$ pour chaque ressource $k$. Ces dates sont
-initialisées à $0$. Après chaque affectation de la ressource $(i,j)$ à la ressource $k$, on met à
+initialisées à $0$. Après chaque affectation d'une opération $(i,j)$ à une ressource $k$, on met à
 jour ces dates :
 $$ sj_j \leftarrow sr_k \leftarrow \max (sj_j, sr_k) + p_{(i,j)} $$
 
-Notons $P$ l'ensemble des opérations qui ont déjà été affectée à une ressource et $k_{(i,j)}$
+Notons $P$ l'ensemble des opérations qui ont déjà été affectées à une ressource et $k_{(i,j)}$
 la ressource nécessaire à l'opération $(i,j)$. On commence par sélectionner pour chaque job la
 prochaine opération disponible :
 $$ \forall j,~d_j = \min_{(i,j) \notin P} i $$

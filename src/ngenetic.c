@@ -30,8 +30,17 @@ void genetic_aux(Plan plan, void * vdata) {
     *data->operations_left -= 1;
 }
 
+inline Plan genetic(Prob prob, char with_crossover);
 
-Plan sch_genetic(Prob prob)  {
+Plan sch_genetic(Prob prob) {
+  return genetic(prob, 1);
+}
+
+Plan sch_mutations(Prob prob) {
+  return genetic(prob, 0);
+}
+
+static inline Plan genetic(Prob prob, char with_crossover)  {
 
   Population youngs  = pop_create();
   Population matures = pop_create();
@@ -112,7 +121,7 @@ Plan sch_genetic(Prob prob)  {
     int median_duration = plan_duration(pop_get(matures, max_m / 2));
 
     data.youngs = youngs;
-    int mutations_left = immobility * POP_SIZE / NB_GENERATIONS;
+    int mutations_left = (with_crossover ? MIN( (POP_SIZE / 4) + immobility * POP_SIZE / NB_GENERATIONS, POP_SIZE) : POP_SIZE);
     int crossovers_left = POP_SIZE - mutations_left;
     debug("%4d %4d\n", mutations_left, crossovers_left);
 
@@ -129,7 +138,6 @@ Plan sch_genetic(Prob prob)  {
           proba = RAND_MAX;
         else
           proba = (RAND_MAX / (int)(div / median_duration)) * 9 * mutations_left ;
-//        printf("  m %14ld %10d ", div, proba);
         int dice = rand();
         if (dice <= proba) {
           stat_mutations += 1;
