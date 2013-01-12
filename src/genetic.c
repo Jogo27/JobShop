@@ -6,128 +6,204 @@
  * Algorithme génétique
  */
 
+#include <stdlib.h>
+#include <limits.h>
+
 #include "main.h"
 #include "plan.h"
 #include "prob.h"
 #include "population.h"
 
-#define NB_INIT_RANDOM 123
+#define NB_GENERATIONS 500
 
 extern Plan sch_random(Prob prob);
 extern Plan sch_greedy(Prob prob);
 
-struct genetic_aux {
-  int        max_duration;
+struct genetic_data {
   Population youngs;
-
-  // Stats
-  unsigned int stat_generations;
-  unsigned int stat_mutations;
-  unsigned int stat_crossovers;
+  int * operations_count;
+  int * operations_left;
 };
 
-static void genetic_aux(Plan plan, void * vdata) {
-  struct genetic_aux * data = (struct genetic_aux *)vdata;
-  if ( (data->max_duration < 0) ||
-       (plan_duration(plan) <= data->max_duration)
-     ) {
-    if (pop_insert(data->youngs, plan) == OK)
-      data->stat_mutations += 1;
-  }
-  else
-    plan_free(plan);
+void genetic_aux(Plan plan, void * vdata) {
+  struct genetic_data * data = (struct genetic_data *)vdata;
+  *data->operations_count += 1;
+  if (pop_insert(data->youngs, plan) == OK)
+    *data->operations_left -= 1;
 }
 
-void grew(Plan mature, Population olds, Prob prob, struct genetic_aux * data) {
-  ushort max = pop_size(olds);
+static inline Plan genetic(Prob prob, char with_crossover, void(*crossover_function)(Plan,Plan,Prob,process_new_plan,void*));
 
-  data->max_duration = (max == 0 ? -1 : plan_duration(pop_get(olds,max-1)));
-  plan_neighbourhood(mature, prob, &genetic_aux, (void *)data);
-
-  if (max > 0) max -= 1;
-  for (int i=0; i < max; i++)
-    if (pop_insert(data->youngs, plan_merge_res(mature, pop_get(olds,i), prob)) == OK)
-      data->stat_crossovers += 1;
+Plan sch_genetic(Prob prob) {
+  return genetic(prob, 1, &plan_crossover_task_onepoint);
 }
 
-Plan sch_pgenetic(Prob prob)  {
+Plan sch_order(Prob prob) {
+  return genetic(prob, 1, &plan_crossover_task_order);
+}
+
+Plan sch_mutations(Prob prob) {
+  return genetic(prob, 0, NULL);
+}
+
+static inline Plan genetic(Prob prob, char with_crossover, void(*crossover_function)(Plan,Plan,Prob,process_new_plan,void*))  {
 
   Population youngs  = pop_create();
   Population matures = pop_create();
-  Population olds    = pop_create();
+  Population buffer  = pop_create();
 
-  struct genetic_aux data;
-  data.stat_generations = 0;
-  data.stat_mutations   = 0;
-  data.stat_crossovers  = 0;
+  ushort nb_job = prob_job_count(prob);
+  ushort nb_res = prob_res_count(prob);
+
+  struct genetic_data data;
+  int generation = 0;
+  int stat_mutations   = 0;
+  int stat_crossovers  = 0;
 
   pop_append(youngs, sch_greedy(prob));
-  for (int i=0; i < NB_INIT_RANDOM; i++) {
+  for (int i=0; i < POP_SIZE; i++) {
     Plan p = sch_random(prob);
     pop_insert(youngs, p);
   }
 
-  ushort id_m, id_o;
-  ushort size_m;
-  Plan   mature;
-  while (pop_size(youngs) > 0) {
-    printf("%d %d\n", pop_size(olds), pop_size(youngs));
+  ushort id_m;
+  int best_makespan = plan_duration(pop_get(youngs,0));
+  for (unsigned int immobility = 0; immobility < NB_GENERATIONS; generation++) {
+    debug("%03d %4d %4d ", generation, pop_size(matures), pop_size(youngs));
 
-    // Youngs become mature
-    Population buffer = matures;
-    matures = youngs;
-    youngs  = buffer;
+    immobility += 1;
+    
+    // Merge youngs and matures into matures
 
-    data.youngs = youngs;
-    data.stat_generations += 1;
-
-    // Matures merge, derive and become old
-    id_o = 0;
     id_m = 0;
-    size_m = pop_size(matures);
-    while ((id_m < size_m) && (id_o < pop_size(olds))) {
-      mature = pop_get(matures, id_m);
-      int duration_o = plan_duration(pop_get(olds, id_o));
-      int duration_m = plan_duration(mature);
+    ushort id_y = 0;
+    ushort max_m = MIN(POP_SIZE / 4, pop_size(matures));
+    ushort max_y = pop_size(youngs);
 
-      if (duration_o < duration_m) {
-        id_o += 1;
-      }
-      else if (duration_o == duration_m) {
-        if (plan_equals(pop_get(olds, id_o), mature)) {
-          plan_free(mature);
-          id_m += 1;
-        }
-        else
-          id_o += 1;
+    while ( (id_y < max_y) && (pop_size(buffer) < POP_SIZE)  &&
+            ( (id_m < max_m) || ((id_m < pop_size(matures)) && ((max_y - id_y) < (POP_SIZE - pop_size(buffer)))) )
+          ) {
+      Plan plan_m = pop_get(matures, id_m);
+      Plan plan_y = pop_get(youngs,  id_y);
+      int duration_m = plan_duration(plan_m);
+      int duration_y = plan_duration(plan_y);
+
+      if (duration_m < duration_y) {
+        pop_append(buffer, plan_m);
+        id_m += 1;
       }
       else {
-        grew(mature, olds, prob, &data);
-        pop_insert_at(olds, mature, id_o);
-        id_m += 1;
-        id_o += 1;
+        pop_append(buffer, plan_y);
+        id_y += 1;
+        if ((duration_m == duration_y) && plan_equals(plan_m, plan_y)) {
+          plan_free(plan_m);
+          id_m += 1;
+        }
       }
     }
-    while ((id_m < size_m) && (id_o < POP_SIZE)) {
-      mature = pop_get(matures, id_m);
-      grew(mature, olds, prob, &data);
-      pop_append(olds, mature);
-      id_m += 1;
-      id_o += 1;
-    }
-    for (; id_m < size_m; id_m++) plan_free(pop_get(matures, id_m));
-    pop_reset(matures);
 
+    if (pop_size(buffer) < POP_SIZE) {
+      if (id_y <max_y)
+        id_y += pop_copy_append(buffer, youngs, id_y);
+      else
+        id_m += pop_copy_append(buffer, matures, id_m);
+    }
+    debug("%4d %4d ", id_m, id_y);
+
+    for (; id_m < pop_size(matures); id_m++) plan_free(pop_get(matures, id_m));
+    pop_reset(matures);
+    for (; id_y < pop_size(youngs);  id_y++) plan_free(pop_get(youngs,  id_y));
+    pop_reset(youngs);
+
+    Population tmp_pop = matures;
+    matures = buffer;
+    buffer  = tmp_pop;
+    
+    debug("- %4d - ", plan_duration(pop_get(matures,0)));
+
+    // Generate youngs from matures 
+
+    max_m = pop_size(matures);
+    int median_duration = plan_duration(pop_get(matures, max_m / 2));
+
+    data.youngs = youngs;
+    int mutations_left = (with_crossover ? MIN( (POP_SIZE / 4) + immobility * POP_SIZE / NB_GENERATIONS, POP_SIZE) : POP_SIZE);
+    int crossovers_left = POP_SIZE - mutations_left;
+    debug("%4d %4d\n", mutations_left, crossovers_left);
+
+    long div;
+    int proba;
+    for (id_m = 0; (id_m < max_m) && ( (mutations_left > 0) || (crossovers_left > 0) ); id_m++) {
+      Plan plan_m = pop_get(matures, id_m);
+      int duration_m = plan_duration(plan_m);
+
+      // Mutations
+      if (mutations_left > 0) {
+        div = (max_m - id_m) * 7 * nb_job * duration_m;
+        if (9 * mutations_left * median_duration >= div)
+          proba = RAND_MAX;
+        else
+          proba = (RAND_MAX / (int)(div / median_duration)) * 9 * mutations_left ;
+        int dice = rand();
+        if (dice <= proba) {
+          data.operations_count = &stat_mutations;
+          data.operations_left  = &mutations_left;
+          if ( dice < (proba * (nb_res - 8)) / (8 * (nb_res - 1)) ) {
+              plan_neighbourhood_worse(plan_m, prob, &genetic_aux, (void *)&data);
+          }
+          else
+            plan_neighbourhood_one(plan_m, (ushort)(rand() % prob_res_count(prob)), prob, &genetic_aux, (void *)&data);
+        }
+        if (pop_size(youngs)) {
+          int makespan_y = plan_duration(pop_get(youngs,0));
+          if (makespan_y < best_makespan) {
+            debug("Mutation %d (%d)\n", id_m,makespan_y);
+            best_makespan = makespan_y;
+            immobility = 0;
+          }
+        }
+      }
+//      else
+//        printf("  m -                         ");
+
+      // Crossover
+      if (crossovers_left > 0) {
+        div = (long)(max_m - id_m) * (long)(max_m - (1 + id_m)) * (long)duration_m;
+        if (crossovers_left * median_duration >= div)
+          proba = rand();
+        else
+          proba = (RAND_MAX / (int)(div / median_duration)) * crossovers_left;
+//        printf("c %14ld %10d\n", div, proba);
+        for (int i = id_m + 1; i < max_m; i++) {
+          int dice = rand();
+          if (dice <= proba) {
+            data.operations_count = &stat_crossovers;
+            data.operations_left  = &crossovers_left;
+            (*crossover_function)(plan_m, pop_get(matures,i), prob, &genetic_aux, (void *)&data);
+            if (pop_size(youngs)) {
+              int makespan_y = plan_duration(pop_get(youngs,0));
+              if (makespan_y < best_makespan) {
+                debug("Crossover %d %d (%d)\n", id_m, i,makespan_y);
+                best_makespan = makespan_y;
+                immobility = 0;
+              }
+            }
+          }
+        } 
+      } // if crossover
+//      else 
+//        printf("c -\n");
+
+    } // for
+//    printf("- %4d %4d %4d %4d\n", id_m, max_m, data.mutations_left, crossovers_left);
   }
 
-
-  Plan ret = pop_get(olds, 0);
-  ushort size_o = pop_size(olds);
-  for (int i=1; i < size_o; i++) plan_free(pop_get(olds, i));
-  pop_free(olds);
+  Plan ret = pop_get(matures, 0);
+  ushort max_m = pop_size(matures);
+  for (int id_m = 1; id_m < max_m; id_m++) plan_free(pop_get(matures, id_m));
   pop_free(matures);
   pop_free(youngs);
-  printf("%d generations, %d mutations, %d crossovers\n",
-      data.stat_generations, data.stat_mutations, data.stat_crossovers);
+  info("%7d mutations", stat_mutations);
+  if (with_crossover) info(" %7d crossovers", stat_crossovers);
   return ret;
 }

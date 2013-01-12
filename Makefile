@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -std=c99 -Winline -O3
 LDFLAGS = -Winline -O3
 
-SRCS = main.c job.c ressource.c prob.c plan.c random.c greedy.c local.c population.c ngenetic.c genetic.c
+SRCS = main.c job.c ressource.c prob.c plan.c random.c greedy.c local.c population.c genetic.c
 OBJS = $(addprefix lib/,$(SRCS:.c=.o))
 
 all: jobshop
@@ -26,7 +26,6 @@ lib/random.o: prob.h job.h plan.h
 lib/greedy.o: prob.h job.h plan.h main.h ressource.h
 lib/local.o: plan.h prob.h main.h
 lib/population.o: population.h main.h plan.h
-lib/ngenetic.o: main.h plan.h prob.h population.h
 lib/genetic.o: main.h plan.h prob.h population.h
 
 clean:
