@@ -1,0 +1,67 @@
+.TH JOBSHOP 1
+.SH NAME
+jobshop \- JobShop scheduler
+.SH SYNOPSIS
+.B jobshop
+.RB [ \-d "] [" \-n
+.IR <repetitions> ]
+.RB [ \-r | \-g | \-l | \-t | \-G | \-m | -o ]
+.I <instance>
+.P
+.BI "jobshop \-v " "<instance> <solution>"
+.SH DESCRIPTION
+.B jobshop
+reads one or many jobshop problem instances and computes schedules using various
+heuristic algorithms. The mandatory option
+.BR \-r ,
+.BR \-g ,
+.BR \-l ,
+.BR \-t ,
+.BR \-G ,
+.BR \-m " or"
+.B \-o
+selects the heuristic.
+.P
+Using the second form, the
+.I solution
+is verified to be an admissible solution of the
+.IR instance .
+.SH OPTIONS
+.IP -d
+Turn on debug mode, producing heuristic specific verbose output.
+.IP "-n repetitions"
+Repeat the algorithm
+.I repetitions
+times and output an average of the makespan and processing time.
+.IP "-r instance"
+Use the random algorithm which produces a pseudo-random admissible solution.
+.IP "-g instance"
+Use the greedy Earliest Due Date heuristic.
+.IP "-l instance"
+Use the local descent algorithm.
+.IP "-t instance"
+Use the tabu search algorithm.
+.IP "-G instance"
+Use the genetic algorithm with the one-point crossover operation.
+.IP "-m instance"
+Use the genetic algorithm without any crossover operation.
+.IP "-o instance"
+Use the genetic algorithm with the partial order crossover operation.
+.IP "-v <instance> <solution>
+Verify that
+.I solution
+is an admissible solution of the
+.IR instance .
+.SH INSTANCE INPUT FORMAT
+The instance input format is a human readable text file composed of integer
+separated by space.  On the first line the number of job and the number of
+ressources is written. Each following line correspond to a job, listing the
+machine number and processing for each operation of the job.
+.SH OUTPUT
+The name of the instance file followed by informations on the computation and
+on the solution is output. If there is only one instance to be proceeded that
+information is written on stderr and the solution is written on stdout.
+Otherwise everything is output on stdout.
+.P
+The solution format is one line with the number of jobs and the number of
+ressources followed by one line for each ressource listing the job numbers.
