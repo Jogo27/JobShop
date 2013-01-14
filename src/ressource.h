@@ -44,8 +44,11 @@ extern result res_free (Ressource res);
 
 /* Ressource Getters and Setters */
 
-// Ressources are equals if their job sequence are equals
+// Return true if their makespan and job sequence are equals
 extern int res_equals (Ressource res_a, Ressource res_b);
+
+// Return true if their job sequence are equals
+extern int res_equals_no_makespan (Ressource res_a, Ressource res_b);
 
 // Add a task (size is increased if needed)
 extern result res_add_task (Ressource res, Job job, ushort job_id);

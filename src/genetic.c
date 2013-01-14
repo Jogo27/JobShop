@@ -14,7 +14,8 @@
 #include "prob.h"
 #include "population.h"
 
-#define NB_GENERATIONS 500
+#define MAX_IMMOBILITY 512
+#define NB_GENERATIONS (4 * MAX_IMMOBILITY)
 
 extern Plan sch_random(Prob prob);
 extern Plan sch_greedy(Prob prob);
@@ -68,7 +69,7 @@ static inline Plan genetic(Prob prob, char with_crossover, void(*crossover_funct
 
   ushort id_m;
   int best_makespan = plan_makespan(pop_get(youngs,0));
-  for (unsigned int immobility = 0; immobility < NB_GENERATIONS; generation++) {
+  for (unsigned int immobility = 0; (immobility <= MAX_IMMOBILITY) && (generation < NB_GENERATIONS); generation++) {
     debug("%03d %4d %4d ", generation, pop_size(matures), pop_size(youngs));
 
     immobility += 1;
@@ -127,7 +128,7 @@ static inline Plan genetic(Prob prob, char with_crossover, void(*crossover_funct
     ushort median_makespan = plan_makespan(pop_get(matures, max_m / 2));
 
     data.youngs = youngs;
-    int mutations_left = (with_crossover ? MIN( (POP_SIZE / 4) + immobility * POP_SIZE / NB_GENERATIONS, POP_SIZE) : POP_SIZE);
+    int mutations_left = (with_crossover ? MIN( (POP_SIZE / 16) + immobility * POP_SIZE / MAX_IMMOBILITY, POP_SIZE) : POP_SIZE);
     int crossovers_left = POP_SIZE - mutations_left;
     debug("%4d %4d\n", mutations_left, crossovers_left);
 
@@ -139,11 +140,11 @@ static inline Plan genetic(Prob prob, char with_crossover, void(*crossover_funct
 
       // Mutations
       if (mutations_left > 0) {
-        div = (max_m - id_m) * 7 * nb_job * makespan_m;
-        if (9 * mutations_left * median_makespan >= div)
+        div = (max_m - id_m) * 4 * (nb_job - 1) * makespan_m;
+        if (5 * mutations_left * median_makespan >= div)
           proba = RAND_MAX;
         else
-          proba = (RAND_MAX / (int)(div / median_makespan)) * 9 * mutations_left ;
+          proba = (RAND_MAX / (int)(div / median_makespan)) * 5 * mutations_left ;
         int dice = rand();
         if (dice <= proba) {
           data.operations_count = &stat_mutations;
@@ -166,7 +167,7 @@ static inline Plan genetic(Prob prob, char with_crossover, void(*crossover_funct
 
       // Crossover
       if (crossovers_left > 0) {
-        div = (long)(max_m - id_m) * (long)(max_m - (1 + id_m)) * (long)makespan_m;
+        div = (long)(max_m - id_m) * (long)(max_m - (1 + id_m)) * (long)2 * (long)makespan_m;
         if (crossovers_left * median_makespan >= div)
           proba = rand();
         else

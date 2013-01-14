@@ -30,6 +30,9 @@ typedef void (*process_new_plan) (Plan,void*);
 // Allocate a brand new plan
 extern Plan   plan_create (Prob prob);
 
+// Create a plan from a stream
+extern Plan plan_parse (FILE* stream, Prob prob);
+
 // Return a copy of plan in which ressources are clones of plan's ressources
 extern Plan   plan_clone (Plan plan);
 
@@ -55,6 +58,9 @@ extern ushort plan_makespan (Plan plan);
 
 // The sum of the makespans of every ressource in the plan
 extern ushort plan_sum_makespan (Plan plan);
+
+// Verify that plan is an admissible solution of prob
+extern Plan plan_verify(Plan plan, Prob prob);
 
 // Output the plan, one line per ressource
 extern void plan_output (Plan plan, FILE * stream);

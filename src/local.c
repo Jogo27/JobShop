@@ -10,6 +10,8 @@
 #include "plan.h"
 #include "prob.h"
 
+#include <stdlib.h>
+
 extern Plan sch_random(Prob prob);
 extern Plan sch_greedy(Prob prob);
 
@@ -51,11 +53,13 @@ Plan sch_local_opt(Prob prob) {
   Plan best = sch_greedy(prob);
   Plan current = plan_clone(best);
 
+  ushort nb_res = prob_res_count(prob);
   ushort max_repetitions = prob_res_count(prob) + prob_job_count(prob);
   ushort count = 0;
   for (int i=0; i < max_repetitions; i++) {
     count += 1;
     Plan neighbour = plan_reduce_critical_path(best, prob);
+    if (neighbour == NULL) plan_neighbourhood_perm(current, rand() % nb_res, prob, &local_aux, &neighbour);
     if (neighbour == NULL) {
       i = max_repetitions;
       debug("\n");
@@ -79,7 +83,7 @@ Plan sch_local_opt(Prob prob) {
 }
 
 
-Plan sch_tabou(Prob prob) {
+Plan sch_vns(Prob prob) {
   Plan best = sch_greedy(prob);
   Plan current = plan_clone(best);
 

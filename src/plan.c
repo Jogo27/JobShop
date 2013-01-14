@@ -49,6 +49,27 @@ Plan plan_create(Prob prob) {
   return plan;
 }
 
+Plan plan_parse (FILE* stream, Prob prob) {
+  Plan plan = plan_create(prob);
+  if (plan == NULL) return NULL;
+
+  // read the header
+  ushort nb_job;
+  ushort nb_res;
+  if (fscanf(stream, "%hd %hd", &nb_job, &nb_res) != 2) die("File format error in header\n");
+  if ((nb_job != prob_job_count(prob)) || (nb_res != plan->nb_res)) die("Instance sizes doesn't match\n");
+
+  ushort job_id;
+  for (int i=0; i < plan->nb_res; i++) {
+    for (int j=0; j < nb_job; j++) {
+      if (fscanf(stream, " %hd", &job_id) != 1) die("File format error at line %d task %d\n", i+1, j+1);
+      res_add_task_low(plan->res[i], job_id, 0, 1);
+    }
+  }
+
+  return plan;
+}
+
 Plan plan_clone(Plan plan) {
   Plan ret = plan_create_empty(plan->nb_res);
   if (ret == NULL) return NULL;
@@ -127,9 +148,21 @@ result plan_schedule(Plan plan, Prob prob, ushort job_id) {
 
 void plan_output(Plan plan, FILE * stream) {
   if (plan == NULL) die("NULL plan");
-  for (int i=0; i < plan->nb_res; i++) {
+
+  // Get the number of jobs
+  ushort nb_job = 0;
+  for (ushort res_id=0; res_id < plan->nb_res; res_id++)
+    for (int task_id = res_max_task_id(plan->res[res_id]) - 1; task_id >= 0; task_id--) {
+      ushort job_id = res_task_job(plan->res[res_id], task_id);
+      if (job_id > nb_job)
+        nb_job = job_id;
+    }
+  nb_job += 1;
+
+  // Output
+  fprintf(stream, "%d %d\n", nb_job, plan->nb_res);
+  for (int i=0; i < plan->nb_res; i++)
     res_output(plan->res[i], stream);
-  }
 }
 
 static Plan plan_replay(Plan plan, Prob prob) {
@@ -353,4 +386,17 @@ void plan_crossover_task (Plan plan_a, Plan plan_b, Prob prob,
   (*function)(plan_repair(draft_b, prob), function_data);
   plan_free(draft_a);
   plan_free(draft_b);
+}
+
+Plan plan_verify(Plan plan, Prob prob) {
+  if ((plan == NULL) || (prob == NULL)) return NULL;
+  Plan replay = plan_repair(plan, prob);
+
+  for (ushort i=0; i < plan->nb_res; i++)
+    if (!res_equals_no_makespan(plan->res[i], replay->res[i])) {
+      plan_free(replay);
+      return NULL;
+    }
+
+  return replay;
 }

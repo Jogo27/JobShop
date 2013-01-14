@@ -48,6 +48,12 @@ Ressource res_create(ushort initial_size) {
   return res;
 }
 
+// Die if res is invalid
+void res_verify(Ressource res) {
+  if (res == NULL) die("NULL ressource pointer");
+  if (res->nb_refs < 1) die("Invalid ressource");
+}
+
 Ressource res_copy(Ressource from) {
   if ((from == NULL) || (from->nb_refs == 0)) return NULL;
 
@@ -109,10 +115,15 @@ int res_equals(Ressource res_a, Ressource res_b) {
   return 1;
 }
 
-// Die if res is invalid
-void res_verify(Ressource res) {
-  if (res == NULL) die("NULL ressource pointer");
-  if (res->nb_refs < 1) die("Invalid ressource");
+int res_equals_no_makespan(Ressource res_a, Ressource res_b) {
+  if (res_a == res_b) return 1;
+  if ( (res_a == NULL) || (res_b == NULL)   ||
+       (res_a->max_pos  != res_b->max_pos)
+     ) return 0;
+
+  for (int i=0; i < res_a->max_pos; i++)
+    if (res_a->tasks[i].job != res_b->tasks[i].job) return 0;
+  return 1;
 }
 
 result res_add_task_low(Ressource res, ushort job_id, ushort min_start, ushort duration) {
